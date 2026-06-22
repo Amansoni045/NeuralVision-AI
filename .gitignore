@@ -4,6 +4,8 @@
 *.keras
 /models/
 /data/
+*.db
+neuralvision.db
 
 # Python environment & cache
 __pycache__/
