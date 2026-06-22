@@ -200,9 +200,18 @@ class PredictionService:
         # Find the bounding box of the digit on our normalized white-on-black mask
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        if len(contours) > 0:
-            # Get bounding box of the largest contour (the digit)
-            c = max(contours, key=cv2.contourArea)
+        h_img, w_img = thresh.shape
+        valid_contours = []
+        for c in contours:
+            x, y, w, h = cv2.boundingRect(c)
+            # Filter out contours that touch the boundary of the cropped ROI (like phone borders)
+            if x > 3 and y > 3 and (x + w) < (w_img - 3) and (y + h) < (h_img - 3):
+                valid_contours.append(c)
+
+        chosen_contours = valid_contours if len(valid_contours) > 0 else contours
+
+        if len(chosen_contours) > 0:
+            c = max(chosen_contours, key=cv2.contourArea)
             x, y, w, h = cv2.boundingRect(c)
             
             # Crop the digit from the binary mask with a small margin
