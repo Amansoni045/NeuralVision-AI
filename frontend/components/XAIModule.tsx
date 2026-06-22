@@ -67,12 +67,20 @@ export default function XAIModule({ predictionData }: XAIModuleProps) {
         </div>
 
         {/* Card 2: Visual Comparison */}
-        <div className="glass p-6 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
-          <div className="flex space-x-12 items-center justify-center">
+        <div className="glass p-6 rounded-2xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
+          <div className="text-center mb-4 max-w-xs">
+            <span className="text-[10px] text-emerald-400 bg-emerald-950/30 border border-emerald-500/20 px-2.5 py-1 rounded-full font-sans inline-block mb-2 font-medium">
+              Human-readable Visual Audit
+            </span>
+            <p className="text-xs text-slate-300 font-medium">
+              The AI focused mainly on these highlighted regions while identifying your digit.
+            </p>
+          </div>
+          
+          <div className="flex space-x-8 items-center justify-center">
             <div className="text-center">
-              <span className="text-[10px] text-slate-500 font-mono uppercase block mb-3">Model Input</span>
+              <span className="text-[10px] text-slate-500 font-mono uppercase block mb-3">Your Canvas Drawing</span>
               <div className="h-32 w-32 rounded-xl bg-black border border-white/10 flex items-center justify-center p-2">
-                {/* Fallback to standard white box or custom canvas base64 image if available */}
                 <div className="h-full w-full rounded bg-slate-950 flex items-center justify-center overflow-hidden">
                   <img
                     src={predictionData.image_data || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="}
@@ -86,7 +94,7 @@ export default function XAIModule({ predictionData }: XAIModuleProps) {
             <div className="text-slate-600 font-bold text-xl">→</div>
 
             <div className="text-center">
-              <span className="text-[10px] text-cyan-400 font-mono font-bold uppercase block mb-3">Grad-CAM Overlay</span>
+              <span className="text-[10px] text-cyan-400 font-mono font-bold uppercase block mb-3">Grad-CAM Focus Overlay</span>
               <div className="h-32 w-32 rounded-xl bg-black border border-cyan-500/20 flex items-center justify-center p-2 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
                 {gradcam_image ? (
                   <img

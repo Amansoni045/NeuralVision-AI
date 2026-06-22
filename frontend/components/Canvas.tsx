@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Trash2, BrainCircuit } from "lucide-react";
 import { API_BASE_URL } from "../config";
-
 import type { XAIPredictionData } from "./XAIModule";
+import { animateDrawing } from "../utils/demoSession";
 
 interface CanvasProps {
   onPredict: (data: XAIPredictionData) => void;
@@ -18,9 +18,15 @@ interface InferenceResponse extends XAIPredictionData {
   latency_ms: number;
 }
 
-export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
+export interface CanvasRef {
+  clear: () => void;
+  startDemo: (onComplete: () => void) => void;
+}
+
+const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
   const [prediction, setPrediction] = useState<number | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
   const [confidences, setConfidences] = useState<number[]>(new Array(10).fill(0));
@@ -32,16 +38,53 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    resetCanvasWithHint();
+  }, []);
+
+  const resetCanvasWithHint = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Fill background with black for MNIST compatibility (white digit on black)
+    // Fill background with black for MNIST compatibility
     ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }, []);
+
+    // Draw dotted trace guide "3"
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+    ctx.lineWidth = 14;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    // Centered digit "3" shape
+    ctx.moveTo(95, 80);
+    ctx.bezierCurveTo(165, 50, 215, 100, 140, 140);
+    ctx.bezierCurveTo(215, 175, 165, 240, 95, 210);
+    ctx.stroke();
+    ctx.setLineDash([]); // Reset dash
+
+    setHasDrawn(false);
+    setPrediction(null);
+    setConfidence(null);
+    setConfidences(new Array(10).fill(0));
+    setLatency(null);
+  };
+
+  const prepareForDrawing = () => {
+    if (!hasDrawn) {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      // Clear the dotted hint before user draws
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      setHasDrawn(true);
+    }
+  };
 
   const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
@@ -66,6 +109,8 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
+    prepareForDrawing();
+    
     const coords = getCoordinates(e);
     if (!coords) return;
 
@@ -114,20 +159,44 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
   };
 
   const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    setPrediction(null);
-    setConfidence(null);
-    setConfidences(new Array(10).fill(0));
-    setLatency(null);
+    resetCanvasWithHint();
   };
+
+  // Expose methods to parent
+  useImperativeHandle(ref, () => ({
+    clear() {
+      clearCanvas();
+    },
+    startDemo(onComplete: () => void) {
+      clearCanvas();
+      setHasDrawn(true);
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Clear layout and trace digit "3"
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      animateDrawing(
+        ctx,
+        brushSize,
+        (_x, _y, _isStarting) => {
+          // Programmatic real-time prediction call
+          if (timerRef.current) clearTimeout(timerRef.current);
+          timerRef.current = setTimeout(() => {
+            triggerPrediction(false);
+          }, 120);
+        },
+        async () => {
+          // Finish and trigger final prediction with explanations
+          await triggerPrediction(true);
+          onComplete();
+        }
+      );
+    }
+  }));
 
   const triggerPrediction = async (shouldExplain: boolean = false) => {
     const canvas = canvasRef.current;
@@ -136,19 +205,10 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
     // Extract image as base64 data URI
     const dataUrl = canvas.toDataURL("image/png");
 
-    // Don't predict empty canvas (if it's purely black)
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    let hasDrawn = false;
-    for (let i = 0; i < imgData.length; i += 4) {
-      if (imgData[i] > 10) { // Check if there's any non-black pixel
-        hasDrawn = true;
-        break;
-      }
-    }
+    // Don't predict empty canvas (if it's purely black or unchanged hint)
     if (!hasDrawn) return;
 
+    setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/predict/canvas`, {
         method: "POST",
@@ -168,9 +228,11 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
       setConfidence(data.confidence);
       setConfidences(data.all_confidences);
       setLatency(data.latency_ms);
-      onPredict(data); // Propagate prediction up (for Grad-CAM, activations, history, etc.)
+      onPredict(data); // Propagate prediction up
     } catch (err) {
-      print("Canvas prediction error:", err);
+      console.error("Canvas prediction error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -178,7 +240,14 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
     <div className="flex flex-col lg:flex-row gap-8 items-center justify-center w-full">
       {/* Canvas Block */}
       <div className="flex flex-col items-center">
-        <div className="relative p-2.5 rounded-2xl glass border border-white/10 glow-pulse">
+        <div className={`relative p-2.5 rounded-2xl glass border transition-all duration-300 ${loading ? 'border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'border-white/10 glow-pulse'}`}>
+          {!hasDrawn && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+              <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-white/5 shadow-xl animate-pulse">
+                Draw here
+              </span>
+            </div>
+          )}
           <canvas
             ref={canvasRef}
             width={280}
@@ -197,7 +266,7 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
         {/* Toolbar controls */}
         <div className="flex items-center space-x-6 mt-4 w-full justify-between px-2">
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-slate-400">Brush Size:</span>
+            <span className="text-xs text-slate-400">Brush:</span>
             <input
               type="range"
               min="8"
@@ -214,7 +283,7 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
             className="flex items-center space-x-1.5 px-3.5 py-1.5 text-xs text-slate-300 hover:text-rose-400 border border-slate-700/50 hover:border-rose-500/20 rounded-lg transition-all cursor-pointer bg-slate-900/50"
           >
             <Trash2 className="h-3.5 w-3.5" />
-            <span>Reset</span>
+            <span>Clear</span>
           </button>
         </div>
       </div>
@@ -277,9 +346,8 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
       </div>
     </div>
   );
-}
+});
 
-// Print helper since we used "print"
-function print(...args: unknown[]) {
-  console.log(...args);
-}
+Canvas.displayName = "Canvas";
+
+export default Canvas;
