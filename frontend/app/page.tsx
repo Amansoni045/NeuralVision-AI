@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { 
   Brain, 
   Cpu, 
@@ -19,8 +20,10 @@ import XAIModule, { XAIPredictionData } from "@/components/XAIModule";
 import BattleArena from "@/components/BattleArena";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 
-export default function Home() {
+function HomeContent() {
   const canvasRef = useRef<CanvasRef>(null);
+  const searchParams = useSearchParams();
+  
   const [selectedModel, setSelectedModel] = useState<string>("cnn");
   const [latestPrediction, setLatestPrediction] = useState<XAIPredictionData | null>(null);
   
@@ -29,6 +32,14 @@ export default function Home() {
   const [predictionReceived, setPredictionReceived] = useState(false);
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const [hoveredTerm, setHoveredTerm] = useState<string | null>(null);
+
+  // Sync tab level with query parameters (e.g. ?level=advanced)
+  useEffect(() => {
+    const level = searchParams.get("level");
+    if (level === "advanced" || level === "expert" || level === "beginner") {
+      setCurrentLevel(level);
+    }
+  }, [searchParams]);
 
   const handlePredict = (data: XAIPredictionData) => {
     setLatestPrediction(data);
@@ -278,5 +289,13 @@ export default function Home() {
         <p>&copy; 2026 NeuralVision AI. Built for scalable MLOps, deep learning, and advanced computer vision analytics.</p>
       </footer>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#06070d]" />}>
+      <HomeContent />
+    </Suspense>
   );
 }

@@ -37,11 +37,14 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link href="/#features" className="text-sm text-slate-300 hover:text-cyan-400 transition-colors">
-              Features
+            <Link href="/" className="text-sm text-slate-300 hover:text-cyan-400 transition-colors">
+              Sandbox
             </Link>
-            <Link href="/#tech-stack" className="text-sm text-slate-300 hover:text-cyan-400 transition-colors">
-              Tech Stack
+            <Link href="/?level=advanced" className="text-sm text-slate-300 hover:text-cyan-400 transition-colors">
+              Audits (XAI)
+            </Link>
+            <Link href="/?level=expert" className="text-sm text-slate-300 hover:text-cyan-400 transition-colors">
+              Metrics & MLOps
             </Link>
             {token ? (
               <>
@@ -87,18 +90,25 @@ export default function Navbar() {
       {isOpen && (
         <div className="md:hidden glass border-t border-white/5 px-2 pt-2 pb-3 space-y-1 sm:px-3">
           <Link
-            href="/#features"
+            href="/"
             onClick={() => setIsOpen(false)}
             className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-cyan-400 hover:bg-white/5"
           >
-            Features
+            Sandbox
           </Link>
           <Link
-            href="/#tech-stack"
+            href="/?level=advanced"
             onClick={() => setIsOpen(false)}
             className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-cyan-400 hover:bg-white/5"
           >
-            Tech Stack
+            Audits (XAI)
+          </Link>
+          <Link
+            href="/?level=expert"
+            onClick={() => setIsOpen(false)}
+            className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-cyan-400 hover:bg-white/5"
+          >
+            Metrics & MLOps
           </Link>
           {token ? (
             <>
