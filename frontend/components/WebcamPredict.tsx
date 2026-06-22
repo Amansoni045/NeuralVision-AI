@@ -334,7 +334,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
             </div>
  
             {/* Controls */}
-            <div className="flex justify-center items-center gap-3 mt-4">
+            <div className="flex flex-wrap justify-center items-center gap-3 mt-4">
               {cameraActive && (
                 <button
                   onClick={() => setIsMirrored(prev => !prev)}

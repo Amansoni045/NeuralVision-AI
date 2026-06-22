@@ -92,19 +92,23 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
 
     const rect = canvas.getBoundingClientRect();
     
+    let clientX = 0;
+    let clientY = 0;
     // Support touch events
     if ("touches" in e) {
       if (e.touches.length === 0) return null;
-      return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top,
-      };
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
     } else {
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
+      clientX = e.clientX;
+      clientY = e.clientY;
     }
+
+    // Map visual client coordinates to internal canvas resolution pixels (280x280)
+    const x = ((clientX - rect.left) * canvas.width) / (rect.width || 1);
+    const y = ((clientY - rect.top) * canvas.height) / (rect.height || 1);
+
+    return { x, y };
   };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -182,7 +186,7 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
       animateDrawing(
         ctx,
         brushSize,
-        (_x, _y, _isStarting) => {
+        () => {
           // Programmatic real-time prediction call
           if (timerRef.current) clearTimeout(timerRef.current);
           timerRef.current = setTimeout(() => {
@@ -260,7 +264,7 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
             onTouchStart={startDrawing}
             onTouchMove={draw}
             onTouchEnd={stopDrawing}
-            className="rounded-xl cursor-crosshair bg-black touch-none"
+            className="rounded-xl cursor-crosshair bg-black touch-none max-w-full h-auto aspect-square"
           />
         </div>
 

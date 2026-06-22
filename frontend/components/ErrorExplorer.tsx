@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AlertCircle, CheckCircle, ShieldAlert, SlidersHorizontal, RefreshCw } from "lucide-react";
+import { AlertCircle, ShieldAlert, SlidersHorizontal, RefreshCw } from "lucide-react";
 import { API_BASE_URL } from "../config";
 
 interface ErrorLog {

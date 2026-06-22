@@ -17,7 +17,9 @@ import {
   ShieldAlert,
   LogIn,
   HelpCircle,
-  Play
+  Play,
+  Menu,
+  X
 } from "lucide-react";
 
 // Import modules
@@ -45,6 +47,7 @@ function DashboardContent() {
   const [isDemoRunning, setIsDemoRunning] = useState(false);
   const [hoveredTerm, setHoveredTerm] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Authentication check (non-blocking)
   useEffect(() => {
@@ -58,6 +61,11 @@ function DashboardContent() {
       setSelectedModel("cnn");
     }
   }, [showAdvanced]);
+
+  // Close sidebar on tab navigation (mobile helper)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [activeTab]);
 
   // Handle URL triggered auto-demo
   useEffect(() => {
@@ -118,10 +126,27 @@ function DashboardContent() {
   const showGatedLock = !token && (activeTab === "analytics" || activeTab === "errors");
 
   return (
-    <div className="min-h-screen bg-background flex text-slate-100 font-sans select-none">
+    <div className="min-h-screen bg-background flex text-slate-100 font-sans select-none relative overflow-x-hidden">
+      {/* Mobile Sidebar Overlay Backdrop */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar Navigation */}
-      <aside className="w-64 bg-[#0a0b12]/80 border-r border-white/5 flex flex-col justify-between p-6 z-10 backdrop-blur-xl">
-        <div className="space-y-8">
+      <aside className={`fixed inset-y-0 left-0 w-64 bg-[#0a0b12]/95 lg:bg-[#0a0b12]/80 border-r border-white/5 flex flex-col justify-between p-6 z-50 lg:z-20 backdrop-blur-xl transition-transform duration-300 lg:transition-none lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="space-y-8 relative">
+          {/* Close button on Mobile */}
+          <button 
+            onClick={() => setSidebarOpen(false)} 
+            className="lg:hidden absolute top-0 right-0 p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors focus:outline-none"
+            aria-label="Close sidebar"
+          >
+            <X className="h-4.5 w-4.5" />
+          </button>
+
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 text-white font-bold text-md tracking-wider">
             <Activity className="h-5.5 w-5.5 text-cyan-400 glow-pulse" />
@@ -246,31 +271,41 @@ function DashboardContent() {
       </aside>
 
       {/* Main Workspace Area */}
-      <main className="flex-1 flex flex-col z-10 overflow-y-auto">
+      <main className="flex-1 flex flex-col z-10 overflow-y-auto lg:pl-64 w-full">
         {/* Workspace Header Banner */}
-        <header className="h-16 border-b border-white/5 px-8 flex items-center justify-between bg-[#0a0b12]/30 backdrop-blur-md">
-          <div className="flex items-center space-x-2">
-            <Layout className="h-4.5 w-4.5 text-slate-400" />
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-              {activeTab === "sandbox" ? "Interactive Sandbox" :
-               activeTab === "battle" ? "Model Battle Arena" :
-               activeTab === "xai" ? "Explainable AI Viewer" :
-               activeTab === "analytics" ? "Training Curves & Confusion Matrix" :
-               "Incorrect prediction explorer"}
-            </h2>
+        <header className="h-16 border-b border-white/5 px-4 sm:px-8 flex items-center justify-between bg-[#0a0b12]/30 backdrop-blur-md">
+          <div className="flex items-center">
+            {/* Hamburger button on Mobile */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-1.5 -ml-1 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors focus:outline-none mr-2.5"
+              aria-label="Open sidebar"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <div className="flex items-center space-x-2">
+              <Layout className="h-4.5 w-4.5 text-slate-400 hidden xs:block" />
+              <h2 className="text-[10px] xs:text-xs font-semibold uppercase tracking-wider text-slate-300">
+                {activeTab === "sandbox" ? "Interactive Sandbox" :
+                 activeTab === "battle" ? "Model Battle Arena" :
+                 activeTab === "xai" ? "Explainable AI Viewer" :
+                 activeTab === "analytics" ? "Training Curves & Confusion Matrix" :
+                 "Incorrect prediction explorer"}
+              </h2>
+            </div>
           </div>
 
           <div className="flex items-center space-x-3">
             {/* Advanced Insights Toggle */}
             <button
               onClick={() => setShowAdvanced(prev => !prev)}
-              className={`px-3 py-1 text-[10px] font-mono rounded-lg border transition-all cursor-pointer ${
+              className={`px-2 py-1 text-[9px] xs:text-[10px] font-mono rounded-lg border transition-all cursor-pointer ${
                 showAdvanced 
                   ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.1)]" 
                   : "bg-slate-950/40 text-slate-500 border-white/5 hover:text-slate-300"
               }`}
             >
-              {showAdvanced ? "Hide Developer Controls" : "Show Developer Controls"}
+              {showAdvanced ? "Hide Dev Controls" : "Show Dev Controls"}
             </button>
 
             {/* Dynamic control for sandbox active model selector */}
@@ -308,10 +343,10 @@ function DashboardContent() {
         </header>
 
         {/* View Port Panel */}
-        <div className="flex-1 p-8 max-w-6xl w-full mx-auto">
+        <div className="flex-1 p-4 sm:p-8 max-w-6xl w-full mx-auto">
           {showGatedLock ? (
             /* Database progressive gate overlay */
-            <div className="flex flex-col items-center justify-center p-12 text-center border border-white/5 rounded-3xl glass h-[400px] relative overflow-hidden">
+            <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center border border-white/5 rounded-3xl glass h-[400px] relative overflow-hidden">
               <div className="absolute top-0 right-0 h-40 w-40 bg-rose-500/5 rounded-bl-full filter blur-2xl" />
               <ShieldAlert className="h-12 w-12 text-rose-400 mb-4 animate-pulse" />
               <h4 className="text-lg font-bold text-white mb-2">Database Logging Access Required</h4>
@@ -346,13 +381,13 @@ function DashboardContent() {
                   </div>
 
                   {/* View 1: Canvas Drawing */}
-                  <div className="glass p-8 rounded-3xl border border-white/5 relative overflow-hidden">
+                  <div className="glass p-4 sm:p-8 rounded-3xl border border-white/5 relative overflow-hidden">
                     <div className="absolute top-0 right-0 h-40 w-40 bg-cyan-500/5 rounded-bl-full filter blur-2xl pointer-events-none" />
                     <Canvas ref={canvasRef} onPredict={handlePredictionCallback} selectedModel={selectedModel} />
                   </div>
 
                   {/* View 2: Webcam & File Upload */}
-                  <div className="glass p-8 rounded-3xl border border-white/5">
+                  <div className="glass p-4 sm:p-8 rounded-3xl border border-white/5">
                     <WebcamPredict onPredict={handlePredictionCallback} selectedModel={selectedModel} />
                   </div>
                 </div>

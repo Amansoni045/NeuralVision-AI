@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Trash2, ShieldAlert, Cpu, Gauge, Layers } from "lucide-react";
+import { Trash2, Cpu, Gauge, Layers } from "lucide-react";
 import { API_BASE_URL } from "../config";
 
 
@@ -29,7 +29,6 @@ export default function BattleArena() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(16);
-  const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<BattleResult | null>(null);
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
 
@@ -55,18 +54,23 @@ export default function BattleArena() {
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
+    
+    let clientX = 0;
+    let clientY = 0;
     if ("touches" in e) {
       if (e.touches.length === 0) return null;
-      return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top,
-      };
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
     } else {
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
+      clientX = e.clientX;
+      clientY = e.clientY;
     }
+
+    // Map visual coordinates to internal canvas resolution pixels (280x280)
+    const x = ((clientX - rect.left) * canvas.width) / (rect.width || 1);
+    const y = ((clientY - rect.top) * canvas.height) / (rect.height || 1);
+
+    return { x, y };
   };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -134,7 +138,6 @@ export default function BattleArena() {
     }
     if (!hasDrawn) return;
 
-    setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/predict/battle`, {
         method: "POST",
@@ -152,8 +155,6 @@ export default function BattleArena() {
       setResults(data);
     } catch (err) {
       console.error("Battle prediction failed:", err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -190,7 +191,7 @@ export default function BattleArena() {
             onTouchStart={startDrawing}
             onTouchMove={draw}
             onTouchEnd={stopDrawing}
-            className="rounded-lg cursor-crosshair bg-black touch-none"
+            className="rounded-lg cursor-crosshair bg-black touch-none max-w-full h-auto aspect-square"
           />
         </div>
 

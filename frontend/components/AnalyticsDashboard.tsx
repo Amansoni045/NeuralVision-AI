@@ -167,7 +167,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Model Selection Tabs */}
-      <div className="flex justify-between items-center bg-slate-950/80 border border-white/5 p-1 rounded-2xl self-start">
+      <div className="flex flex-wrap gap-1 bg-slate-950/80 border border-white/5 p-1 rounded-2xl self-start">
         {MODEL_NAMES.map((m) => (
           <button
             key={m}
@@ -192,52 +192,54 @@ export default function AnalyticsDashboard() {
             <span>Confusion Matrix</span>
           </h3>
 
-          <div className="flex flex-col items-center">
-            {/* The Matrix Grid */}
-            <div className="grid grid-cols-11 gap-1 w-full max-w-sm mb-6">
-              {/* Header Label Column placeholder */}
-              <div className="text-center font-mono text-[9px] text-slate-600 flex items-center justify-center font-bold">Act\Pred</div>
-              {/* Column labels */}
-              {Array.from({ length: 10 }).map((_, colIdx) => (
-                <div key={colIdx} className="text-center font-mono text-xs text-slate-400 flex items-center justify-center font-bold">
-                  {colIdx}
-                </div>
-              ))}
-
-              {/* Rows */}
-              {matrix.map((row, rowIdx) => (
-                <Fragment key={`matrix-row-${rowIdx}`}>
-                  {/* Row label */}
-                  <div className="text-center font-mono text-xs text-slate-400 flex items-center justify-center font-bold">
-                    {rowIdx}
+          <div className="flex flex-col items-center w-full">
+            {/* The Matrix Grid scroll wrapper for small viewports */}
+            <div className="w-full overflow-x-auto pb-2 flex justify-start sm:justify-center">
+              <div className="grid grid-cols-11 gap-1 min-w-[320px] max-w-sm mb-6 px-1">
+                {/* Header Label Column placeholder */}
+                <div className="text-center font-mono text-[9px] text-slate-600 flex items-center justify-center font-bold">Act\Pred</div>
+                {/* Column labels */}
+                {Array.from({ length: 10 }).map((_, colIdx) => (
+                  <div key={colIdx} className="text-center font-mono text-xs text-slate-400 flex items-center justify-center font-bold">
+                    {colIdx}
                   </div>
-                  {/* Cell grid */}
-                  {row.map((cellVal, colIdx) => {
-                    const ratio = cellVal / maxMatrixVal;
-                    const isDiagonal = rowIdx === colIdx;
-                    // Dark theme cyber coloring: diagonal cells glow cyan/emerald, off-diagonal errors glow rose
-                    let cellColor = `rgba(30, 41, 59, ${0.1 + 0.3 * ratio})`;
-                    if (isDiagonal) {
-                      cellColor = `rgba(6, 182, 212, ${0.15 + 0.8 * ratio})`;
-                    } else if (cellVal > 0) {
-                      cellColor = `rgba(244, 63, 94, ${0.1 + 0.7 * ratio})`;
-                    }
+                ))}
 
-                    return (
-                      <div
-                        key={`${rowIdx}-${colIdx}`}
-                        title={`Actual ${rowIdx}, Predicted ${colIdx}: ${cellVal}`}
-                        className={`aspect-square rounded border border-white/5 flex items-center justify-center text-[9px] font-mono font-bold transition-all hover:scale-110 cursor-pointer ${
-                          isDiagonal ? "text-white" : cellVal > 0 ? "text-rose-300" : "text-slate-600"
-                        }`}
-                        style={{ backgroundColor: cellColor }}
-                      >
-                        {cellVal > 999 ? `${(cellVal/1000).toFixed(1)}k` : cellVal}
-                      </div>
-                    );
-                  })}
-                </Fragment>
-              ))}
+                {/* Rows */}
+                {matrix.map((row, rowIdx) => (
+                  <Fragment key={`matrix-row-${rowIdx}`}>
+                    {/* Row label */}
+                    <div className="text-center font-mono text-xs text-slate-400 flex items-center justify-center font-bold">
+                      {rowIdx}
+                    </div>
+                    {/* Cell grid */}
+                    {row.map((cellVal, colIdx) => {
+                      const ratio = cellVal / maxMatrixVal;
+                      const isDiagonal = rowIdx === colIdx;
+                      // Dark theme cyber coloring: diagonal cells glow cyan/emerald, off-diagonal errors glow rose
+                      let cellColor = `rgba(30, 41, 59, ${0.1 + 0.3 * ratio})`;
+                      if (isDiagonal) {
+                        cellColor = `rgba(6, 182, 212, ${0.15 + 0.8 * ratio})`;
+                      } else if (cellVal > 0) {
+                        cellColor = `rgba(244, 63, 94, ${0.1 + 0.7 * ratio})`;
+                      }
+
+                      return (
+                        <div
+                          key={`${rowIdx}-${colIdx}`}
+                          title={`Actual ${rowIdx}, Predicted ${colIdx}: ${cellVal}`}
+                          className={`aspect-square rounded border border-white/5 flex items-center justify-center text-[9px] font-mono font-bold transition-all hover:scale-110 cursor-pointer ${
+                            isDiagonal ? "text-white" : cellVal > 0 ? "text-rose-300" : "text-slate-600"
+                          }`}
+                          style={{ backgroundColor: cellColor }}
+                        >
+                          {cellVal > 999 ? `${(cellVal/1000).toFixed(1)}k` : cellVal}
+                        </div>
+                      );
+                    })}
+                  </Fragment>
+                ))}
+              </div>
             </div>
             <p className="text-[10px] text-slate-500 text-center leading-relaxed">
               Rows represent the actual classes in the MNIST dataset. Columns represent the predictions generated by the network. Heavy diagonal values indicate high classification accuracy.

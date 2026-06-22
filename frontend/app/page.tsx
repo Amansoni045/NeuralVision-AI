@@ -99,6 +99,11 @@ export default function Home() {
                 <path d="M 0,4 L 80,4" stroke="#06b6d4" strokeWidth="2" className="animate-flow" />
               </svg>
             </div>
+            <div className="md:hidden h-8 w-2 flex items-center justify-center">
+              <svg className="w-2 h-full" fill="none">
+                <path d="M 1,0 L 1,32" stroke="#06b6d4" strokeWidth="2" className="animate-flow" />
+              </svg>
+            </div>
 
             {/* Pipeline Stage 2 */}
             <div className="flex flex-col items-center text-center max-w-[150px] group cursor-default">
@@ -115,6 +120,11 @@ export default function Home() {
             <div className="hidden md:block flex-1 min-w-[20px] max-w-[80px]">
               <svg className="w-full h-2" fill="none">
                 <path d="M 0,4 L 80,4" stroke="#8b5cf6" strokeWidth="2" className="animate-flow" />
+              </svg>
+            </div>
+            <div className="md:hidden h-8 w-2 flex items-center justify-center">
+              <svg className="w-2 h-full" fill="none">
+                <path d="M 1,0 L 1,32" stroke="#8b5cf6" strokeWidth="2" className="animate-flow" />
               </svg>
             </div>
 
@@ -135,6 +145,11 @@ export default function Home() {
                 <path d="M 0,4 L 80,4" stroke="#f43f5e" strokeWidth="2" className="animate-flow" />
               </svg>
             </div>
+            <div className="md:hidden h-8 w-2 flex items-center justify-center">
+              <svg className="w-2 h-full" fill="none">
+                <path d="M 1,0 L 1,32" stroke="#f43f5e" strokeWidth="2" className="animate-flow" />
+              </svg>
+            </div>
 
             {/* Pipeline Stage 4 */}
             <div className="flex flex-col items-center text-center max-w-[150px] group cursor-default">
@@ -151,6 +166,11 @@ export default function Home() {
             <div className="hidden md:block flex-1 min-w-[20px] max-w-[80px]">
               <svg className="w-full h-2" fill="none">
                 <path d="M 0,4 L 80,4" stroke="#f59e0b" strokeWidth="2" className="animate-flow" />
+              </svg>
+            </div>
+            <div className="md:hidden h-8 w-2 flex items-center justify-center">
+              <svg className="w-2 h-full" fill="none">
+                <path d="M 1,0 L 1,32" stroke="#f59e0b" strokeWidth="2" className="animate-flow" />
               </svg>
             </div>
 

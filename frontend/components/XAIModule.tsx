@@ -104,7 +104,7 @@ export default function XAIModule({ predictionData }: XAIModuleProps) {
             </p>
           </div>
           
-          <div className="flex space-x-8 items-center justify-center">
+          <div className="flex flex-col sm:flex-row sm:space-x-8 items-center justify-center gap-4 sm:gap-0">
             <div className="text-center">
               <span className="text-[10px] text-slate-500 font-mono uppercase block mb-3">Your Canvas Drawing</span>
               <div className="h-32 w-32 rounded-xl bg-black border border-white/10 flex items-center justify-center p-2">
@@ -118,7 +118,7 @@ export default function XAIModule({ predictionData }: XAIModuleProps) {
               </div>
             </div>
 
-            <div className="text-slate-600 font-bold text-xl">→</div>
+            <div className="text-slate-600 font-bold text-xl rotate-90 sm:rotate-0">→</div>
 
             <div className="text-center">
               <span className="text-[10px] text-cyan-400 font-mono font-bold uppercase block mb-3">Grad-CAM Focus Overlay</span>
@@ -151,7 +151,7 @@ export default function XAIModule({ predictionData }: XAIModuleProps) {
             </div>
             
             {/* Layer tabs */}
-            <div className="flex space-x-2 bg-slate-950/80 border border-white/5 p-1 rounded-xl w-full md:w-auto">
+            <div className="flex flex-wrap gap-2 bg-slate-950/80 border border-white/5 p-1 rounded-xl w-full md:w-auto">
               {layerNames.map((name) => (
                 <button
                   key={name}
