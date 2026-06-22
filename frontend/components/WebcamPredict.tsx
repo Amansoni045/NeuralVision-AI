@@ -34,6 +34,23 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isMirrored, setIsMirrored] = useState(true); // Default mirrored for selfie cameras
 
+  // Refs to avoid stale closures in requestAnimationFrame loop
+  const isMirroredRef = useRef(isMirrored);
+  const selectedModelRef = useRef(selectedModel);
+  const onPredictRef = useRef(onPredict);
+
+  useEffect(() => {
+    isMirroredRef.current = isMirrored;
+  }, [isMirrored]);
+
+  useEffect(() => {
+    selectedModelRef.current = selectedModel;
+  }, [selectedModel]);
+
+  useEffect(() => {
+    onPredictRef.current = onPredict;
+  }, [onPredict]);
+
   // Hidden canvas for frame capturing
   const hiddenCanvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -115,7 +132,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
     const sx = (videoWidth - size) / 2;
     const sy = (videoHeight - size) / 2;
 
-    if (isMirrored) {
+    if (isMirroredRef.current) {
       // Mirror the context so the drawn image is also flipped (matches screen)
       ctx.translate(canvas.width, 0);
       ctx.scale(-1, 1);
@@ -147,7 +164,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
         body: JSON.stringify({
           image_data: dataUrl,
           source: "webcam",
-          model_type: selectedModel,
+          model_type: selectedModelRef.current,
           explain: false // Disable expensive explainability maps for live webcam polling
         })
       });
@@ -159,7 +176,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
       setConfidence(data.confidence);
       setLatency(data.latency_ms);
       setPreprocessedImg(data.preprocessed_image || null);
-      onPredict(data);
+      onPredictRef.current(data);
     } catch (err) {
       console.error("Frame prediction error:", err);
     } finally {
