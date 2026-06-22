@@ -45,7 +45,7 @@ jobs:
     - name: Install Frontend Dependencies
       run: |
         cd frontend
-        npm ci
+        npm ci --include=optional
 
     - name: Frontend Build Verification
       run: |
