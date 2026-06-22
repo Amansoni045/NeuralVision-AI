@@ -2,8 +2,8 @@
 *.csv
 *.h5
 *.keras
-models/
-data/
+/models/
+/data/
 
 # Python environment & cache
 __pycache__/
