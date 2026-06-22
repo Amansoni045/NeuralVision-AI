@@ -16,8 +16,8 @@ class Settings(BaseSettings):
         "sqlite:///./neuralvision.db"
     )
     
-    # MLflow
-    MLFLOW_TRACKING_URI: str = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+    # MLflow tracking URI (defaults to local file storage, overridden in docker)
+    MLFLOW_TRACKING_URI: str = os.getenv("MLFLOW_TRACKING_URI", "file:./mlruns")
     MLFLOW_EXPERIMENT_NAME: str = "NeuralVision_MNIST"
     
     # Paths
