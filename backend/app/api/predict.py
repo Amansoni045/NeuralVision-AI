@@ -1,5 +1,6 @@
 import base64
-from fastapi import APIRouter, Depends, UploadFile, File, Form, Optional
+from fastapi import APIRouter, Depends, UploadFile, File, Form
+from typing import Optional
 from sqlalchemy.orm import Session
 import numpy as np
 
