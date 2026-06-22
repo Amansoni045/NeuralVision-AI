@@ -13,6 +13,11 @@ class PredictionService:
         self.perceptron = None
         self.ann = None
         self.cnn = None
+        self.model_status = {
+            "perceptron": {"status": "unknown", "error": None},
+            "ann": {"status": "unknown", "error": None},
+            "cnn": {"status": "unknown", "error": None}
+        }
         self.load_all_models()
 
     def build_perceptron(self):
@@ -58,37 +63,46 @@ class PredictionService:
             try:
                 self.perceptron = load_model(perceptron_path)
                 print("Perceptron model loaded successfully.")
+                self.model_status["perceptron"] = {"status": "loaded", "error": None}
             except Exception as e:
                 print(f"Error loading Perceptron: {e}. Reinitializing...")
                 self.perceptron = self.build_perceptron()
+                self.model_status["perceptron"] = {"status": "failed_load_reinitialized", "error": str(e)}
         else:
             self.perceptron = self.build_perceptron()
             self.perceptron.save(perceptron_path)
             print("Perceptron model initialized and saved.")
+            self.model_status["perceptron"] = {"status": "initialized_new", "error": None}
 
         if os.path.exists(ann_path):
             try:
                 self.ann = load_model(ann_path)
                 print("ANN model loaded successfully.")
+                self.model_status["ann"] = {"status": "loaded", "error": None}
             except Exception as e:
                 print(f"Error loading ANN: {e}. Reinitializing...")
                 self.ann = self.build_ann()
+                self.model_status["ann"] = {"status": "failed_load_reinitialized", "error": str(e)}
         else:
             self.ann = self.build_ann()
             self.ann.save(ann_path)
             print("ANN model initialized and saved.")
+            self.model_status["ann"] = {"status": "initialized_new", "error": None}
 
         if os.path.exists(cnn_path):
             try:
                 self.cnn = load_model(cnn_path)
                 print("CNN model loaded successfully.")
+                self.model_status["cnn"] = {"status": "loaded", "error": None}
             except Exception as e:
                 print(f"Error loading CNN: {e}. Reinitializing...")
                 self.cnn = self.build_cnn()
+                self.model_status["cnn"] = {"status": "failed_load_reinitialized", "error": str(e)}
         else:
             self.cnn = self.build_cnn()
             self.cnn.save(cnn_path)
             print("CNN model initialized and saved.")
+            self.model_status["cnn"] = {"status": "initialized_new", "error": None}
 
         # Force a forward pass to initialize Keras symbolic input and output nodes (fixes Grad-CAM bug)
         dummy_input = np.zeros((1, 28, 28, 1), dtype=np.float32)

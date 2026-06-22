@@ -40,6 +40,8 @@ def get_model_info():
                 
             info[name] = {
                 "name": name.upper(),
+                "status": prediction_service.model_status.get(name, {}).get("status", "loaded"),
+                "error": prediction_service.model_status.get(name, {}).get("error", None),
                 "total_parameters": total_params,
                 "trainable_parameters": trainable_params,
                 "non_trainable_parameters": non_trainable_params,
