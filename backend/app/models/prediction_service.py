@@ -186,18 +186,18 @@ class PredictionService:
         else:
             gray = img
 
-        # MNIST is white digits on black background.
-        # Check if the drawing background is light or dark.
-        edge_pixels = np.concatenate([
-            gray[0, :], gray[-1, :], gray[:, 0], gray[:, -1]
-        ])
-        edge_mean = np.mean(edge_pixels)
-        if edge_mean > 127:
-            gray = cv2.bitwise_not(gray)
+        # Apply Gaussian Blur to smooth camera sensor noise
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
-        # Find the bounding box of the digit
-        # Threshold first to get a clean binary mask
-        _, thresh = cv2.threshold(gray, 20, 255, cv2.THRESH_BINARY)
+        # Use Otsu's thresholding to dynamically find the optimal foreground threshold
+        _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # In MNIST, digits are white on a black background (foreground occupies less than 50% area).
+        # If the thresholded image is mostly white (>50% mean), we invert the mask.
+        if np.mean(thresh) > 127:
+            thresh = cv2.bitwise_not(thresh)
+
+        # Find the bounding box of the digit on our normalized white-on-black mask
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if len(contours) > 0:
@@ -205,16 +205,15 @@ class PredictionService:
             c = max(contours, key=cv2.contourArea)
             x, y, w, h = cv2.boundingRect(c)
             
-            # Crop the digit with a small margin
-            margin = 2
+            # Crop the digit from the binary mask with a small margin
+            margin = 3
             x_start = max(0, x - margin)
             y_start = max(0, y - margin)
-            x_end = min(gray.shape[1], x + w + margin)
-            y_end = min(gray.shape[0], y + h + margin)
-            cropped = gray[y_start:y_end, x_start:x_end]
+            x_end = min(thresh.shape[1], x + w + margin)
+            y_end = min(thresh.shape[0], y + h + margin)
+            cropped = thresh[y_start:y_end, x_start:x_end]
 
-            # Resize the cropped digit to fit within 20x20
-            # keeping the aspect ratio
+            # Resize the cropped digit to fit within 20x20 keeping the aspect ratio
             if w > h:
                 new_w = 20
                 new_h = int(20 * (h / w))
@@ -229,8 +228,7 @@ class PredictionService:
             # Create a blank 28x28 background
             mnist_img = np.zeros((28, 28), dtype=np.uint8)
             
-            # Calculate where to place the 20x20 digit inside 28x28
-            # Standard MNIST centering is done using the center of mass
+            # Calculate center of mass for perfect MNIST alignment
             M = cv2.moments(resized_digit)
             if M["m00"] > 0:
                 cx = int(M["m10"] / M["m00"])
@@ -239,18 +237,17 @@ class PredictionService:
                 cx = resized_digit.shape[1] // 2
                 cy = resized_digit.shape[0] // 2
 
-            # Place the resized digit such that its center of mass aligns with the center of the 28x28 image (14, 14)
+            # Place the resized digit centered on (14, 14)
             dx = 14 - cx
             dy = 14 - cy
             
-            # Bound shift to keep it within image limits
             dx = max(0, min(28 - resized_digit.shape[1], dx))
             dy = max(0, min(28 - resized_digit.shape[0], dy))
 
             mnist_img[dy:dy+resized_digit.shape[0], dx:dx+resized_digit.shape[1]] = resized_digit
         else:
             # Fallback if no contours found
-            mnist_img = cv2.resize(gray, (28, 28), interpolation=cv2.INTER_AREA)
+            mnist_img = cv2.resize(thresh, (28, 28), interpolation=cv2.INTER_AREA)
 
         # Normalize to [0, 1]
         normalized = mnist_img.astype("float32") / 255.0
