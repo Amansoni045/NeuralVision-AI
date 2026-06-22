@@ -22,6 +22,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isAnalyzingRef = useRef(false);
 
   const [activeTab, setActiveTab] = useState<"webcam" | "upload">("upload");
   const [cameraActive, setCameraActive] = useState(false);
@@ -78,12 +79,21 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
 
   // Frame processing and prediction
   const captureFrameAndPredict = async () => {
+    if (isAnalyzingRef.current) return;
+    isAnalyzingRef.current = true;
+
     const video = videoRef.current;
     const canvas = hiddenCanvasRef.current;
-    if (!video || !canvas || video.paused || video.ended) return;
+    if (!video || !canvas || video.paused || video.ended) {
+      isAnalyzingRef.current = false;
+      return;
+    }
 
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) {
+      isAnalyzingRef.current = false;
+      return;
+    }
 
     // Get source video resolutions
     const videoWidth = video.videoWidth || 300;
@@ -107,8 +117,8 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
       canvas.height
     );
     
-    // Grab base64 data URI
-    const dataUrl = canvas.toDataURL("image/png");
+    // Grab compressed base64 JPEG to significantly reduce network payload size
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.45);
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/predict/canvas`, {
@@ -132,6 +142,8 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
       onPredict(data);
     } catch (err) {
       console.error("Frame prediction error:", err);
+    } finally {
+      isAnalyzingRef.current = false;
     }
   };
 
