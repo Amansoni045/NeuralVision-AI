@@ -173,6 +173,8 @@ class PredictionService:
         image_bytes = base64.b64decode(base64_str)
         nparr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)
+        if img is None:
+            return np.zeros((28, 28, 1), dtype=np.float32)
 
         # Handle RGBA/RGB channels
         if len(img.shape) == 3 and img.shape[2] == 4:
