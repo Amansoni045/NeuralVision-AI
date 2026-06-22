@@ -10,10 +10,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str = os.getenv("SECRET_KEY", "SUPER_SECRET_JWT_KEY_FOR_NEURAL_VISION_AI_2026")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
     
-    # PostgreSQL Database
+    # Database URL (defaults to SQLite, overridden by environment in docker)
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL", 
-        "postgresql://postgres:postgres@localhost:5432/neuralvision"
+        "sqlite:///./neuralvision.db"
     )
     
     # MLflow
