@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Info, HelpCircle, Eye } from "lucide-react";
+import { useState, useEffect } from "react";
+import { HelpCircle, Eye } from "lucide-react";
 
 interface XAIModuleProps {
   predictionData: XAIPredictionData | null;
@@ -21,6 +21,18 @@ export interface XAIPredictionData {
 export default function XAIModule({ predictionData }: XAIModuleProps) {
   const [activeLayer, setActiveLayer] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+
+  // Auto-select the first filter of the active layer on layer change
+  useEffect(() => {
+    if (!predictionData) return;
+    const { activation_maps } = predictionData;
+    const currentActivations = activeLayer && activation_maps ? activation_maps[activeLayer] : null;
+    if (currentActivations && currentActivations.filters.length > 0) {
+      setSelectedFilter(currentActivations.filters[0]);
+    } else {
+      setSelectedFilter(null);
+    }
+  }, [activeLayer, predictionData]);
 
   if (!predictionData) {
     return (
@@ -50,15 +62,30 @@ export default function XAIModule({ predictionData }: XAIModuleProps) {
         <div className="glass p-6 rounded-2xl border border-white/5 flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-semibold tracking-wide text-white uppercase mb-4 flex items-center space-x-2">
-              <Info className="h-5 w-5 text-cyan-400" />
-              <span>Explainable AI (Grad-CAM)</span>
+              <Eye className="h-5 w-5 text-cyan-400" />
+              <span>Why did the AI choose this digit?</span>
             </h3>
-            <p className="text-xs text-slate-400 leading-relaxed mb-4">
-              <strong>Gradient-weighted Class Activation Mapping (Grad-CAM)</strong> is a computer vision explainability technique. It uses the gradients of the final prediction class, flowing into the final convolutional layer of the CNN, to produce a coarse localization map highlighting the regions in the image most important for predicting the class.
+            <p className="text-xs text-slate-300 leading-relaxed mb-4">
+              When the AI makes a prediction, it analyzes specific visual features of your drawing. This map highlights the areas that influenced the decision the most.
             </p>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-400 leading-relaxed mb-4">
               <span className="text-rose-400 font-bold">Red regions</span> show positive influence where the model paid the most attention (e.g. loops, endpoints). <span className="text-blue-500 font-bold">Blue regions</span> show areas that had negligible or neutral influence on the classification.
             </p>
+
+            <details className="mt-4 group border-t border-white/5 pt-3 cursor-pointer">
+              <summary className="text-[10px] text-cyan-400 group-hover:text-cyan-300 font-mono uppercase font-bold flex items-center justify-between list-none">
+                <span>Advanced Insights (How it works under the hood)</span>
+                <span className="text-[9px] text-slate-500 font-sans group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="text-[10px] text-slate-400 leading-relaxed mt-2.5 space-y-2 select-text cursor-auto">
+                <p>
+                  <strong>Gradient-weighted Class Activation Mapping (Grad-CAM)</strong> computes the gradients of the target class score with respect to the feature map activations of the final convolutional layer of the network.
+                </p>
+                <p>
+                  By taking the global average pooling of these gradients, we obtain weights representing the importance of each feature map. A rectified linear combination (ReLU) of the weighted maps isolates positive features, producing the spatial heat map.
+                </p>
+              </div>
+            </details>
           </div>
           <div className="flex items-center space-x-2 mt-6 p-3 bg-cyan-950/15 border border-cyan-800/10 rounded-xl text-cyan-400 text-[10px]">
             <HelpCircle className="h-4 w-4 flex-shrink-0" />

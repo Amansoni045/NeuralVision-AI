@@ -172,6 +172,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
       if (!response.ok) throw new Error("API error");
 
       const data = (await response.json()) as InferenceResponse;
+      data.image_data = dataUrl;
       setPrediction(data.predicted_class);
       setConfidence(data.confidence);
       setLatency(data.latency_ms);
@@ -223,6 +224,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
         if (!response.ok) throw new Error("API error");
 
         const data = (await response.json()) as InferenceResponse;
+        data.image_data = dataUrl;
         setPrediction(data.predicted_class);
         setConfidence(data.confidence);
         setLatency(data.latency_ms);

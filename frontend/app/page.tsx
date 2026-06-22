@@ -4,11 +4,8 @@ import Link from "next/link";
 import { 
   Activity, 
   Brain, 
-  Camera, 
   Cpu, 
   Eye, 
-  Database, 
-  BarChart4, 
   Play,
   Sparkles
 } from "lucide-react";
@@ -28,31 +25,43 @@ export default function Home() {
       <Navbar />
 
       {/* Hero Section */}
-      <main className="flex-1 flex flex-col items-center justify-center pt-28 pb-16 px-4 z-10 max-w-7xl mx-auto w-full">
-        <div className="text-center space-y-6 max-w-3xl">
+      <main className="flex-1 flex flex-col items-center justify-center pt-24 pb-16 px-4 z-10 max-w-7xl mx-auto w-full">
+        {/* Style injection for animated pipeline connection lines */}
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes progress-flow {
+            0% { stroke-dashoffset: 20; }
+            100% { stroke-dashoffset: 0; }
+          }
+          .animate-flow {
+            stroke-dasharray: 6, 4;
+            animation: progress-flow 1.2s linear infinite;
+          }
+        `}} />
+
+        <div className="text-center space-y-6 max-w-3xl mb-16">
           <div className="inline-flex items-center space-x-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-cyan-400 font-mono tracking-wide">
             <Sparkles className="h-3 w-3 text-cyan-400 animate-pulse" />
-            <span>Interactive deep learning & explainability platform</span>
+            <span>Experience Interactive Deep Learning Explainability</span>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-none text-white">
-            Transforming CNNs into{" "}
+            Draw a Number.{" "}
             <span className="bg-gradient-to-r from-cyan-400 via-violet-400 to-rose-400 bg-clip-text text-transparent">
-              Production AI
+              Watch AI Understand It.
             </span>
           </h1>
 
           <p className="text-base md:text-lg text-slate-400 font-medium leading-relaxed max-w-2xl mx-auto">
-            NeuralVision AI is an end-to-end digit recognition workspace. Compare Perceptron, ANN, and CNN models in real-time, inspect activations, and audit predictions with explainable Grad-CAM.
+            NeuralVision AI is an end-to-end computer vision workspace. Sketch digits, compare model architectures side-by-side, inspect layer filters, and see exactly *why* the AI made its decision in real-time.
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
             <Link
               href="/dashboard?demo=true"
-              className="px-8 py-3.5 text-sm font-semibold tracking-wide btn-cyber rounded-xl shadow-lg w-full sm:w-auto text-center flex items-center justify-center space-x-2 cursor-pointer"
+              className="px-8 py-3.5 text-sm font-semibold tracking-wide btn-cyber rounded-xl shadow-lg w-full sm:w-auto text-center flex items-center justify-center space-x-2 cursor-pointer transition-transform hover:scale-105"
             >
-              <Play className="h-4 w-4 fill-current" />
-              <span>Try Sandbox Demo</span>
+              <Play className="h-4 w-4 fill-current animate-pulse" />
+              <span>Watch AI Think (Interactive Demo)</span>
             </Link>
             <Link
               href="/dashboard"
@@ -63,115 +72,247 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Feature Cards Grid */}
-        <section id="features" className="w-full pt-28">
-          <div className="text-center mb-16">
-            <h2 className="text-sm font-semibold tracking-widest text-cyan-400 uppercase font-mono mb-2">Workspace Modules</h2>
-            <p className="text-2xl md:text-4xl font-extrabold text-white tracking-tight">SaaS-Grade MLOps Ecosystem</p>
+        {/* Interactive Architecture Visualization Section */}
+        <section className="w-full max-w-5xl mb-24">
+          <div className="text-center mb-10">
+            <h2 className="text-xs font-semibold tracking-widest text-cyan-400 uppercase font-mono mb-2">Interactive Pipeline</h2>
+            <p className="text-xl md:text-2xl font-bold text-white">How the AI processes your drawing</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Feature 1 */}
-            <div className="glass p-6 rounded-2xl border border-white/5 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 h-16 w-16 bg-cyan-500/5 rounded-bl-full filter blur-lg transition-all group-hover:bg-cyan-500/10" />
-              <Brain className="h-8 w-8 text-cyan-400 mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Interactive Drawing Canvas</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Sketch digits on our high-performance viewport. Predictions update instantly in real-time as you draw, detailing confidence intervals across all 10 classes.
+          <div className="glass p-8 rounded-3xl border border-white/5 relative overflow-hidden flex flex-col md:flex-row gap-6 md:gap-4 items-center justify-between">
+            <div className="absolute inset-0 bg-cyan-500/[0.01] pointer-events-none" />
+
+            {/* Pipeline Stage 1 */}
+            <div className="flex flex-col items-center text-center max-w-[150px] group cursor-default">
+              <div className="h-12 w-12 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center group-hover:border-cyan-400 group-hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] transition-all">
+                <Brain className="h-5 w-5 text-cyan-400" />
+              </div>
+              <h4 className="text-xs font-bold text-white mt-3">1. User Drawing</h4>
+              <p className="text-[10px] text-slate-500 mt-1 leading-normal">
+                You draw a digit on the viewport or stream it via webcam.
               </p>
             </div>
 
-            {/* Feature 2 */}
-            <div className="glass p-6 rounded-2xl border border-white/5 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 h-16 w-16 bg-violet-500/5 rounded-bl-full filter blur-lg transition-all group-hover:bg-violet-500/10" />
-              <Camera className="h-8 w-8 text-violet-400 mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Webcam Recognition</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Stream live webcam feeds to classify handwritten digits in real-time. Features automated pre-processing overlays to crop, resize, and normalize frames.
+            {/* Connecting Arrow 1 */}
+            <div className="hidden md:block flex-1 min-w-[20px] max-w-[80px]">
+              <svg className="w-full h-2" fill="none">
+                <path d="M 0,4 L 80,4" stroke="#06b6d4" strokeWidth="2" className="animate-flow" />
+              </svg>
+            </div>
+
+            {/* Pipeline Stage 2 */}
+            <div className="flex flex-col items-center text-center max-w-[150px] group cursor-default">
+              <div className="h-12 w-12 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center group-hover:border-violet-400 group-hover:shadow-[0_0_15px_rgba(139,92,246,0.15)] transition-all">
+                <Activity className="h-5 w-5 text-violet-400" />
+              </div>
+              <h4 className="text-xs font-bold text-white mt-3">2. Preprocessing</h4>
+              <p className="text-[10px] text-slate-500 mt-1 leading-normal">
+                Image is scaled to 28x28, centered, and normalized.
               </p>
             </div>
 
-            {/* Feature 3 */}
-            <div className="glass p-6 rounded-2xl border border-white/5 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 h-16 w-16 bg-rose-500/5 rounded-bl-full filter blur-lg transition-all group-hover:bg-rose-500/10" />
-              <Cpu className="h-8 w-8 text-rose-400 mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Model Battle Arena</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Run feedforward inferences through Perceptron, ANN, and CNN networks in parallel. Benchmark execution latencies, accuracy scores, and parameter metrics.
+            {/* Connecting Arrow 2 */}
+            <div className="hidden md:block flex-1 min-w-[20px] max-w-[80px]">
+              <svg className="w-full h-2" fill="none">
+                <path d="M 0,4 L 80,4" stroke="#8b5cf6" strokeWidth="2" className="animate-flow" />
+              </svg>
+            </div>
+
+            {/* Pipeline Stage 3 */}
+            <div className="flex flex-col items-center text-center max-w-[150px] group cursor-default">
+              <div className="h-12 w-12 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center group-hover:border-rose-400 group-hover:shadow-[0_0_15px_rgba(244,63,94,0.15)] transition-all">
+                <Cpu className="h-5 w-5 text-rose-400" />
+              </div>
+              <h4 className="text-xs font-bold text-white mt-3">3. Convolutional NN</h4>
+              <p className="text-[10px] text-slate-500 mt-1 leading-normal">
+                Convolutional filters scan shapes and check features.
               </p>
             </div>
 
-            {/* Feature 4 */}
-            <div className="glass p-6 rounded-2xl border border-white/5 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 h-16 w-16 bg-amber-500/5 rounded-bl-full filter blur-lg transition-all group-hover:bg-amber-500/10" />
-              <Eye className="h-8 w-8 text-amber-400 mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Explainable AI (Grad-CAM)</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Audit CNN predictions. Visually explore heatmaps showing which pixels triggered classifications and interactively examine activation maps for each layer.
+            {/* Connecting Arrow 3 */}
+            <div className="hidden md:block flex-1 min-w-[20px] max-w-[80px]">
+              <svg className="w-full h-2" fill="none">
+                <path d="M 0,4 L 80,4" stroke="#f43f5e" strokeWidth="2" className="animate-flow" />
+              </svg>
+            </div>
+
+            {/* Pipeline Stage 4 */}
+            <div className="flex flex-col items-center text-center max-w-[150px] group cursor-default">
+              <div className="h-12 w-12 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center group-hover:border-amber-400 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.15)] transition-all">
+                <Sparkles className="h-5 w-5 text-amber-400" />
+              </div>
+              <h4 className="text-xs font-bold text-white mt-3">4. Predict Output</h4>
+              <p className="text-[10px] text-slate-500 mt-1 leading-normal">
+                Model calculates the confidence across all 10 digits.
               </p>
             </div>
 
-            {/* Feature 5 */}
-            <div className="glass p-6 rounded-2xl border border-white/5 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 h-16 w-16 bg-emerald-500/5 rounded-bl-full filter blur-lg transition-all group-hover:bg-emerald-500/10" />
-              <Database className="h-8 w-8 text-emerald-400 mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Relational Logging</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Connects to a PostgreSQL database to store historical classifications. Flag incorrect model outputs and explore class distributions in the error hub.
-              </p>
+            {/* Connecting Arrow 4 */}
+            <div className="hidden md:block flex-1 min-w-[20px] max-w-[80px]">
+              <svg className="w-full h-2" fill="none">
+                <path d="M 0,4 L 80,4" stroke="#f59e0b" strokeWidth="2" className="animate-flow" />
+              </svg>
             </div>
 
-            {/* Feature 6 */}
-            <div className="glass p-6 rounded-2xl border border-white/5 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 h-16 w-16 bg-blue-500/5 rounded-bl-full filter blur-lg transition-all group-hover:bg-blue-500/10" />
-              <BarChart4 className="h-8 w-8 text-blue-400 mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">MLflow & MLOps Pipelines</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Track training epochs, validation curves, loss, accuracy, and register model versions with MLflow logs. Run builds reliably in Docker containers.
+            {/* Pipeline Stage 5 */}
+            <div className="flex flex-col items-center text-center max-w-[150px] group cursor-default">
+              <div className="h-12 w-12 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center group-hover:border-emerald-400 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.15)] transition-all">
+                <Eye className="h-5 w-5 text-emerald-400" />
+              </div>
+              <h4 className="text-xs font-bold text-white mt-3">5. Explain Audits</h4>
+              <p className="text-[10px] text-slate-500 mt-1 leading-normal">
+                Grad-CAM traces gradients to show *why* it decided.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Tech Stack section */}
-        <section id="tech-stack" className="w-full pt-28">
-          <div className="text-center mb-16">
-            <h2 className="text-sm font-semibold tracking-widest text-cyan-400 uppercase font-mono mb-2">Tech Stack</h2>
-            <p className="text-2xl md:text-4xl font-extrabold text-white tracking-tight">The Modern AI Stack</p>
+        {/* Guided User Journey (4 Steps) */}
+        <section id="journey" className="w-full mb-24">
+          <div className="text-center mb-12">
+            <h2 className="text-xs font-semibold tracking-widest text-cyan-400 uppercase font-mono mb-2">How It Works</h2>
+            <p className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Your Guided User Journey</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            <div className="glass px-6 py-4 rounded-xl border border-white/5 text-center">
-              <span className="text-sm font-bold text-white block">Next.js 15</span>
-              <span className="text-[10px] text-slate-500 font-mono">React Framework</span>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="glass p-5 rounded-2xl border border-white/5 relative">
+              <div className="absolute top-4 right-4 text-3xl font-black text-white/5 font-mono select-none">01</div>
+              <span className="text-[9px] uppercase font-mono tracking-wider text-cyan-400 font-bold block mb-1">Step 1</span>
+              <h3 className="text-sm font-bold text-white mb-2">Input / Draw</h3>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Sketch a digit on the canvas panel or activate the live HD webcam feed to show a digit card to the AI.
+              </p>
             </div>
-            <div className="glass px-6 py-4 rounded-xl border border-white/5 text-center">
-              <span className="text-sm font-bold text-white block">FastAPI</span>
-              <span className="text-[10px] text-slate-500 font-mono">Python REST API</span>
+
+            <div className="glass p-5 rounded-2xl border border-white/5 relative">
+              <div className="absolute top-4 right-4 text-3xl font-black text-white/5 font-mono select-none">02</div>
+              <span className="text-[9px] uppercase font-mono tracking-wider text-violet-400 font-bold block mb-1">Step 2</span>
+              <h3 className="text-sm font-bold text-white mb-2">Predict</h3>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Compare models side-by-side in the Model Battle Arena to benchmark predictions, latencies, and parameters.
+              </p>
             </div>
-            <div className="glass px-6 py-4 rounded-xl border border-white/5 text-center">
-              <span className="text-sm font-bold text-white block">TensorFlow</span>
-              <span className="text-[10px] text-slate-500 font-mono">Deep Learning Engine</span>
+
+            <div className="glass p-5 rounded-2xl border border-white/5 relative">
+              <div className="absolute top-4 right-4 text-3xl font-black text-white/5 font-mono select-none">03</div>
+              <span className="text-[9px] uppercase font-mono tracking-wider text-rose-400 font-bold block mb-1">Step 3</span>
+              <h3 className="text-sm font-bold text-white mb-2">Understand</h3>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Look behind the curtain using Grad-CAM heatmaps and explore activation explorer filters layer by layer.
+              </p>
             </div>
-            <div className="glass px-6 py-4 rounded-xl border border-white/5 text-center">
-              <span className="text-sm font-bold text-white block">PostgreSQL</span>
-              <span className="text-[10px] text-slate-500 font-mono">Relational DB</span>
+
+            <div className="glass p-5 rounded-2xl border border-white/5 relative">
+              <div className="absolute top-4 right-4 text-3xl font-black text-white/5 font-mono select-none">04</div>
+              <span className="text-[9px] uppercase font-mono tracking-wider text-amber-400 font-bold block mb-1">Step 4</span>
+              <h3 className="text-sm font-bold text-white mb-2">Explore MLOps</h3>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Log predictions in the PostgreSQL database, explore real-world errors in the hub, and check MLflow tracking curves.
+              </p>
             </div>
-            <div className="glass px-6 py-4 rounded-xl border border-white/5 text-center">
-              <span className="text-sm font-bold text-white block">TailwindCSS</span>
-              <span className="text-[10px] text-slate-500 font-mono">Styling Engine</span>
+          </div>
+        </section>
+
+        {/* Can You Fool The AI? (Model Limitations) */}
+        <section id="fool-ai" className="w-full mb-24 max-w-5xl">
+          <div className="text-center mb-12">
+            <h2 className="text-xs font-semibold tracking-widest text-rose-400 uppercase font-mono mb-2">Honest Machine Learning</h2>
+            <p className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Can you fool the AI?</p>
+            <p className="text-xs text-slate-400 mt-2 max-w-lg mx-auto">
+              Real neural networks aren&apos;t perfect. Try sketching these edge cases inside the workspace to see where AI struggles and how explainability audits reveal its logic:
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="glass p-6 rounded-2xl border border-white/5">
+              <div className="h-8 w-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center font-bold font-mono text-sm mb-3">7</div>
+              <h3 className="text-xs font-bold text-white mb-2">The Crossed European &apos;7&apos;</h3>
+              <p className="text-[10px] text-slate-400 leading-relaxed">
+                US MNIST models are rarely trained on handwritten 7s containing a middle horizontal strike-through. Sketch one to watch the AI confuse it with a 2 or a 3.
+              </p>
             </div>
-            <div className="glass px-6 py-4 rounded-xl border border-white/5 text-center">
-              <span className="text-sm font-bold text-white block">Three.js</span>
-              <span className="text-[10px] text-slate-500 font-mono">3D Graphics R3F</span>
+
+            <div className="glass p-6 rounded-2xl border border-white/5">
+              <div className="h-8 w-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center font-bold font-mono text-sm mb-3">4</div>
+              <h3 className="text-xs font-bold text-white mb-2">The Loop Closed &apos;4&apos; vs &apos;9&apos;</h3>
+              <p className="text-[10px] text-slate-400 leading-relaxed">
+                If you close the upper triangle of your written 4, the model loses the vertical stroke feature and will misclassify it as a 9 with very high confidence.
+              </p>
             </div>
-            <div className="glass px-6 py-4 rounded-xl border border-white/5 text-center">
-              <span className="text-sm font-bold text-white block">MLflow</span>
-              <span className="text-[10px] text-slate-500 font-mono">Experiment Tracking</span>
+
+            <div className="glass p-6 rounded-2xl border border-white/5">
+              <div className="h-8 w-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center font-bold font-mono text-sm mb-3">8</div>
+              <h3 className="text-xs font-bold text-white mb-2">The Open Loop &apos;8&apos; vs &apos;3&apos;</h3>
+              <p className="text-[10px] text-slate-400 leading-relaxed">
+                If the left loops of your written 8 don&apos;t connect perfectly, the CNN misses the closed circle geometry and classifies it as a 3, demonstrating its focus on closed loops.
+              </p>
             </div>
-            <div className="glass px-6 py-4 rounded-xl border border-white/5 text-center">
-              <span className="text-sm font-bold text-white block">Docker</span>
-              <span className="text-[10px] text-slate-500 font-mono">Containerization</span>
+          </div>
+        </section>
+
+        {/* Recruiter Corner: What This Project Demonstrates */}
+        <section id="recruiter-corner" className="w-full pt-12 border-t border-white/5">
+          <div className="text-center mb-12">
+            <h2 className="text-xs font-semibold tracking-widest text-cyan-400 uppercase font-mono mb-2">Recruiter Corner</h2>
+            <p className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">What This Project Demonstrates</p>
+            <p className="text-xs text-slate-500 mt-2 max-w-lg mx-auto">
+              Built to show production-grade software engineering, database integration, and MLOps practices.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Skills Card 1 */}
+            <div className="glass p-6 rounded-2xl border border-white/5 flex flex-col justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white mb-2 flex items-center space-x-2">
+                  <span className="h-2 w-2 rounded-full bg-cyan-400" />
+                  <span>Deep Learning & Explainability</span>
+                </h3>
+                <p className="text-[11px] text-slate-400 leading-relaxed mb-4">
+                  Demonstrates architecture design of Convolutional Neural Networks (CNNs) in TensorFlow/Keras. Focuses on gradient-weighted class activation mapping (Grad-CAM) to inspect intermediate node layers and visual prediction rationale.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-1.5 border-t border-white/5 pt-3">
+                <span className="text-[9px] font-mono bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded">CNNs</span>
+                <span className="text-[9px] font-mono bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded">Grad-CAM</span>
+                <span className="text-[9px] font-mono bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded">TensorFlow</span>
+              </div>
+            </div>
+
+            {/* Skills Card 2 */}
+            <div className="glass p-6 rounded-2xl border border-white/5 flex flex-col justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white mb-2 flex items-center space-x-2">
+                  <span className="h-2 w-2 rounded-full bg-violet-400" />
+                  <span>Production-Grade MLOps</span>
+                </h3>
+                <p className="text-[11px] text-slate-400 leading-relaxed mb-4">
+                  Integrates experiment logging pipelines with MLflow. Implements relational schema logging for database storage, model versioning, automatic training fallbacks, and multi-container coordination.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-1.5 border-t border-white/5 pt-3">
+                <span className="text-[9px] font-mono bg-violet-500/10 text-violet-400 px-2 py-0.5 rounded">MLflow</span>
+                <span className="text-[9px] font-mono bg-violet-500/10 text-violet-400 px-2 py-0.5 rounded">PostgreSQL</span>
+                <span className="text-[9px] font-mono bg-violet-500/10 text-violet-400 px-2 py-0.5 rounded">Docker Compose</span>
+              </div>
+            </div>
+
+            {/* Skills Card 3 */}
+            <div className="glass p-6 rounded-2xl border border-white/5 flex flex-col justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white mb-2 flex items-center space-x-2">
+                  <span className="h-2 w-2 rounded-full bg-rose-400" />
+                  <span>Full-Stack Web Engineering</span>
+                </h3>
+                <p className="text-[11px] text-slate-400 leading-relaxed mb-4">
+                  Features a modern, high-performance Next.js 15 app router clientside UI and a fast, asynchronous FastAPI REST server. Leverages low-latency base64 transmission pipelines, canvas rendering, and reactive stream triggers.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-1.5 border-t border-white/5 pt-3">
+                <span className="text-[9px] font-mono bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded">Next.js 15</span>
+                <span className="text-[9px] font-mono bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded">FastAPI</span>
+                <span className="text-[9px] font-mono bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded">TailwindCSS</span>
+              </div>
             </div>
           </div>
         </section>

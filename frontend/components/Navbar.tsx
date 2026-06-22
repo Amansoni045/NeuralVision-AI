@@ -37,13 +37,13 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link href="/" className="text-sm text-slate-300 hover:text-cyan-400 transition-colors">
+            <Link href="/dashboard?tab=sandbox" className="text-sm text-slate-300 hover:text-cyan-400 transition-colors">
               Sandbox
             </Link>
-            <Link href="/?level=advanced" className="text-sm text-slate-300 hover:text-cyan-400 transition-colors">
+            <Link href="/dashboard?tab=xai" className="text-sm text-slate-300 hover:text-cyan-400 transition-colors">
               Audits (XAI)
             </Link>
-            <Link href="/?level=expert" className="text-sm text-slate-300 hover:text-cyan-400 transition-colors">
+            <Link href="/dashboard?tab=analytics" className="text-sm text-slate-300 hover:text-cyan-400 transition-colors">
               Metrics & MLOps
             </Link>
             {token ? (
@@ -65,7 +65,7 @@ export default function Navbar() {
               </>
             ) : (
               <Link
-                href="/login"
+                href="/dashboard"
                 className="flex items-center space-x-1 px-4 py-2 text-sm font-medium text-white btn-cyber rounded-lg"
               >
                 <LogIn className="h-4 w-4" />
@@ -90,21 +90,21 @@ export default function Navbar() {
       {isOpen && (
         <div className="md:hidden glass border-t border-white/5 px-2 pt-2 pb-3 space-y-1 sm:px-3">
           <Link
-            href="/"
+            href="/dashboard?tab=sandbox"
             onClick={() => setIsOpen(false)}
             className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-cyan-400 hover:bg-white/5"
           >
             Sandbox
           </Link>
           <Link
-            href="/?level=advanced"
+            href="/dashboard?tab=xai"
             onClick={() => setIsOpen(false)}
             className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-cyan-400 hover:bg-white/5"
           >
             Audits (XAI)
           </Link>
           <Link
-            href="/?level=expert"
+            href="/dashboard?tab=analytics"
             onClick={() => setIsOpen(false)}
             className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-cyan-400 hover:bg-white/5"
           >
@@ -133,7 +133,7 @@ export default function Navbar() {
             </>
           ) : (
             <Link
-              href="/login"
+              href="/dashboard"
               onClick={() => setIsOpen(false)}
               className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-white btn-cyber"
             >

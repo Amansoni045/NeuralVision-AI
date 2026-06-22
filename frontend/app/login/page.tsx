@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Activity, LogIn, UserPlus, ArrowLeft } from "lucide-react";
-import { API_BASE_URL } from "../../config";
+import { API_BASE_URL } from "@/config";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,6 +20,7 @@ export default function LoginPage() {
     if (localStorage.getItem("token")) {
       router.push("/dashboard");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

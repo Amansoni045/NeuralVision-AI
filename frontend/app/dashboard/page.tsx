@@ -16,8 +16,8 @@ import {
   User,
   ShieldAlert,
   LogIn,
-  Sparkles,
-  HelpCircle
+  HelpCircle,
+  Play
 } from "lucide-react";
 
 // Import modules
@@ -44,12 +44,20 @@ function DashboardContent() {
   const [token, setToken] = useState<string | null>(null);
   const [isDemoRunning, setIsDemoRunning] = useState(false);
   const [hoveredTerm, setHoveredTerm] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Authentication check (non-blocking)
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
     setToken(savedToken);
   }, []);
+
+  // Force CNN model when advanced/developer mode is disabled
+  useEffect(() => {
+    if (!showAdvanced) {
+      setSelectedModel("cnn");
+    }
+  }, [showAdvanced]);
 
   // Handle URL triggered auto-demo
   useEffect(() => {
@@ -70,7 +78,16 @@ function DashboardContent() {
         });
       }, 500);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, canvasRef]);
+
+  // Read and switch to specific tab from URL query parameters
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && ["sandbox", "battle", "xai", "analytics", "errors"].includes(tabParam)) {
+      setActiveTab(tabParam as "sandbox" | "battle" | "xai" | "analytics" | "errors");
+    }
+  }, [searchParams]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -80,6 +97,22 @@ function DashboardContent() {
 
   const handlePredictionCallback = (data: XAIPredictionData) => {
     setLatestPrediction(data);
+  };
+
+  const triggerDemo = () => {
+    if (isDemoRunning || !canvasRef.current) return;
+    setIsDemoRunning(true);
+    setActiveTab("sandbox");
+    setSelectedModel("cnn");
+    
+    setTimeout(() => {
+      canvasRef.current?.startDemo(() => {
+        setIsDemoRunning(false);
+        setTimeout(() => {
+          setActiveTab("xai");
+        }, 1200);
+      });
+    }, 500);
   };
 
   const showGatedLock = !token && (activeTab === "analytics" || activeTab === "errors");
@@ -99,6 +132,15 @@ function DashboardContent() {
 
           {/* Nav Items */}
           <nav className="space-y-1">
+            <button
+              onClick={triggerDemo}
+              disabled={isDemoRunning}
+              className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-xs font-semibold rounded-xl bg-gradient-to-r from-cyan-500/10 to-violet-500/10 hover:from-cyan-500/20 hover:to-violet-500/20 border border-cyan-500/20 hover:border-cyan-500/40 text-cyan-400 hover:text-white transition-all cursor-pointer mb-5 disabled:opacity-50"
+            >
+              <Play className={`h-3.5 w-3.5 ${isDemoRunning ? 'animate-pulse' : ''}`} />
+              <span>{isDemoRunning ? "Playing Demo..." : "Watch AI Think (Demo)"}</span>
+            </button>
+
             <span className="text-[9px] text-slate-500 uppercase tracking-widest font-mono block px-3 mb-2">Workspace</span>
             
             <button
@@ -218,37 +260,51 @@ function DashboardContent() {
             </h2>
           </div>
 
-          {/* Dynamic control for sandbox active model selector */}
-          {activeTab === "sandbox" && (
-            <div className="flex items-center space-x-3 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-white/5 relative">
-              <span className="text-[10px] text-slate-500 font-mono uppercase">Neural Model:</span>
-              <select
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className="bg-slate-950 border border-white/10 rounded px-2 py-0.5 text-xs text-cyan-400 outline-none cursor-pointer hover:border-cyan-500/20"
-              >
-                <option value="cnn">CNN (Champion)</option>
-                <option value="ann">ANN (Dense)</option>
-                <option value="perceptron">Perceptron</option>
-              </select>
-              
-              <div
-                onMouseEnter={() => setHoveredTerm(selectedModel)}
-                onMouseLeave={() => setHoveredTerm(null)}
-                className="cursor-help text-slate-400 hover:text-white"
-              >
-                <HelpCircle className="h-3.5 w-3.5" />
-              </div>
+          <div className="flex items-center space-x-3">
+            {/* Advanced Insights Toggle */}
+            <button
+              onClick={() => setShowAdvanced(prev => !prev)}
+              className={`px-3 py-1 text-[10px] font-mono rounded-lg border transition-all cursor-pointer ${
+                showAdvanced 
+                  ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.1)]" 
+                  : "bg-slate-950/40 text-slate-500 border-white/5 hover:text-slate-300"
+              }`}
+            >
+              {showAdvanced ? "Hide Developer Controls" : "Show Developer Controls"}
+            </button>
 
-              {hoveredTerm && (
-                <div className="absolute right-0 top-10 w-64 bg-slate-950/95 border border-white/10 p-3 rounded-xl shadow-2xl z-50 text-[11px] text-slate-300 leading-normal font-sans">
-                  {selectedModel === "cnn" && "CNN (Convolutional Neural Network): Scans the canvas segments. Excels at extracting shape curves and diagonals."}
-                  {selectedModel === "ann" && "ANN (Dense): Flat layer representation. Looks at pixels individually without spatial connections."}
-                  {selectedModel === "perceptron" && "Perceptron: Simplest structure. Runs a simple linear decision boundary."}
+            {/* Dynamic control for sandbox active model selector */}
+            {activeTab === "sandbox" && showAdvanced && (
+              <div className="flex items-center space-x-3 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-white/5 relative">
+                <span className="text-[10px] text-slate-500 font-mono uppercase">Neural Model:</span>
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="bg-slate-950 border border-white/10 rounded px-2 py-0.5 text-xs text-cyan-400 outline-none cursor-pointer hover:border-cyan-500/20"
+                >
+                  <option value="cnn">CNN (Champion)</option>
+                  <option value="ann">ANN (Dense)</option>
+                  <option value="perceptron">Perceptron</option>
+                </select>
+                
+                <div
+                  onMouseEnter={() => setHoveredTerm(selectedModel)}
+                  onMouseLeave={() => setHoveredTerm(null)}
+                  className="cursor-help text-slate-400 hover:text-white"
+                >
+                  <HelpCircle className="h-3.5 w-3.5" />
                 </div>
-              )}
-            </div>
-          )}
+
+                {hoveredTerm && (
+                  <div className="absolute right-0 top-10 w-64 bg-slate-950/95 border border-white/10 p-3 rounded-xl shadow-2xl z-50 text-[11px] text-slate-300 leading-normal font-sans">
+                    {selectedModel === "cnn" && "CNN (Convolutional Neural Network): Scans the canvas segments. Excels at extracting shape curves and diagonals."}
+                    {selectedModel === "ann" && "ANN (Dense): Flat layer representation. Looks at pixels individually without spatial connections."}
+                    {selectedModel === "perceptron" && "Perceptron: Simplest structure. Runs a simple linear decision boundary."}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </header>
 
         {/* View Port Panel */}
