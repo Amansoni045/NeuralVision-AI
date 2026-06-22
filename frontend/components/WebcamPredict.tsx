@@ -21,7 +21,7 @@ interface InferenceResponse extends XAIPredictionData {
 export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredictProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const isAnalyzingRef = useRef(false);
 
   const [activeTab, setActiveTab] = useState<"webcam" | "upload">("upload");
@@ -32,6 +32,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
   const [preprocessedImg, setPreprocessedImg] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [isMirrored, setIsMirrored] = useState(true); // Default mirrored for selfie cameras
 
   // Hidden canvas for frame capturing
   const hiddenCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -40,7 +41,11 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 300, height: 300, facingMode: "environment" }
+        video: { 
+          width: { ideal: 1280 }, 
+          height: { ideal: 720 }, 
+          facingMode: "user" 
+        }
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -63,9 +68,9 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
     setCameraActive(false);
     setIsProcessing(false);
@@ -95,14 +100,26 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
       return;
     }
 
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Save context for transform reset
+    ctx.save();
+
     // Get source video resolutions
-    const videoWidth = video.videoWidth || 300;
-    const videoHeight = video.videoHeight || 300;
+    const videoWidth = video.videoWidth || 1280;
+    const videoHeight = video.videoHeight || 720;
 
     // Crop a central square region (60% of smallest dimension) to focus on the target box area
     const size = Math.min(videoWidth, videoHeight) * 0.6;
     const sx = (videoWidth - size) / 2;
     const sy = (videoHeight - size) / 2;
+
+    if (isMirrored) {
+      // Mirror the context so the drawn image is also flipped (matches screen)
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
 
     // Draw the cropped central region of the video frame onto the hidden canvas
     ctx.drawImage(
@@ -116,6 +133,9 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
       canvas.width,
       canvas.height
     );
+    
+    // Restore transform state
+    ctx.restore();
     
     // Grab compressed base64 JPEG to significantly reduce network payload size
     const dataUrl = canvas.toDataURL("image/jpeg", 0.45);
@@ -149,10 +169,15 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
 
   const startAnalyzing = () => {
     setIsProcessing(true);
-    // Poll the camera stream every 300ms for predictions
-    intervalRef.current = setInterval(() => {
-      captureFrameAndPredict();
-    }, 300);
+    
+    const analyzeLoop = async () => {
+      if (videoRef.current && !videoRef.current.paused && !videoRef.current.ended) {
+        await captureFrameAndPredict();
+      }
+      animationFrameRef.current = requestAnimationFrame(analyzeLoop);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(analyzeLoop);
   };
 
   // Image upload handler
@@ -270,7 +295,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
                 autoPlay
                 playsInline
                 muted
-                className={`w-full h-full object-cover scale-x-[-1] ${cameraActive ? "block" : "hidden"}`}
+                className={`w-full h-full object-cover ${isMirrored ? "scale-x-[-1]" : ""} ${cameraActive ? "block" : "hidden"}`}
               />
               {cameraActive && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
@@ -288,9 +313,19 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
                 </div>
               )}
             </div>
-
+ 
             {/* Controls */}
-            <div className="flex justify-center mt-4">
+            <div className="flex justify-center items-center gap-3 mt-4">
+              {cameraActive && (
+                <button
+                  onClick={() => setIsMirrored(prev => !prev)}
+                  className="flex items-center space-x-2 px-3 py-2 bg-slate-900 border border-white/10 hover:border-cyan-500/30 rounded-xl transition-all cursor-pointer text-xs font-medium text-slate-300 hover:text-white"
+                  title="Toggle mirroring. Mirror is best for user-facing selfie cameras; unmirror is best if showing digits via rear camera."
+                >
+                  <RefreshCw className="h-3 w-3 text-cyan-400" />
+                  <span>{isMirrored ? "Unmirror" : "Mirror"}</span>
+                </button>
+              )}
               {cameraActive ? (
                 <button
                   onClick={stopCamera}
@@ -312,9 +347,9 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
           </div>
         )}
       </div>
-
+ 
       {/* Hidden Canvas for Webcam frame captures */}
-      <canvas ref={hiddenCanvasRef} width={280} height={280} className="hidden" />
+      <canvas ref={hiddenCanvasRef} width={150} height={150} className="hidden" />
 
       {/* Results View */}
       <div className="flex flex-col w-full max-w-sm glass p-6 rounded-2xl border border-white/5">
