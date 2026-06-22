@@ -83,8 +83,27 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Draw video frame to hidden canvas
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // Get source video resolutions
+    const videoWidth = video.videoWidth || 300;
+    const videoHeight = video.videoHeight || 300;
+
+    // Crop a central square region (60% of smallest dimension) to focus on the target box area
+    const size = Math.min(videoWidth, videoHeight) * 0.6;
+    const sx = (videoWidth - size) / 2;
+    const sy = (videoHeight - size) / 2;
+
+    // Draw the cropped central region of the video frame onto the hidden canvas
+    ctx.drawImage(
+      video,
+      sx,
+      sy,
+      size,
+      size,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
     
     // Grab base64 data URI
     const dataUrl = canvas.toDataURL("image/png");
@@ -237,6 +256,15 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
                 muted
                 className={`w-full h-full object-cover scale-x-[-1] ${cameraActive ? "block" : "hidden"}`}
               />
+              {cameraActive && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                  <div className="w-44 h-44 border-2 border-dashed border-cyan-400/50 rounded-2xl shadow-[0_0_15px_rgba(6,182,212,0.15)] flex items-center justify-center bg-cyan-950/5">
+                    <span className="text-[9px] uppercase font-mono tracking-widest text-cyan-400 bg-slate-950/80 px-2 py-1 rounded border border-cyan-500/20">
+                      Align Digit Here
+                    </span>
+                  </div>
+                </div>
+              )}
               {!cameraActive && (
                 <div className="flex flex-col items-center">
                   <Video className="h-12 w-12 text-slate-600 mb-2" />
