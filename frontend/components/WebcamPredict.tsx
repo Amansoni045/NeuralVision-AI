@@ -15,6 +15,7 @@ interface InferenceResponse extends XAIPredictionData {
   predicted_class: number;
   confidence: number;
   latency_ms: number;
+  preprocessed_image?: string;
 }
 
 export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredictProps) {
@@ -27,6 +28,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
   const [prediction, setPrediction] = useState<number | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
   const [latency, setLatency] = useState<number | null>(null);
+  const [preprocessedImg, setPreprocessedImg] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
@@ -126,6 +128,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
       setPrediction(data.predicted_class);
       setConfidence(data.confidence);
       setLatency(data.latency_ms);
+      setPreprocessedImg(data.preprocessed_image || null);
       onPredict(data);
     } catch (err) {
       console.error("Frame prediction error:", err);
@@ -169,6 +172,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
         setPrediction(data.predicted_class);
         setConfidence(data.confidence);
         setLatency(data.latency_ms);
+        setPreprocessedImg(data.preprocessed_image || null);
         onPredict(data);
       } catch (err) {
         console.error("Uploaded image prediction error:", err);
@@ -325,6 +329,18 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
             )}
           </div>
         </div>
+
+        {preprocessedImg && (
+          <div className="flex flex-col items-center justify-center p-3 mb-4 bg-slate-950/60 border border-white/5 rounded-xl">
+            <span className="text-[9px] uppercase font-mono tracking-widest text-slate-500 mb-2">AI Input View (28x28 MNIST format)</span>
+            <img
+              src={preprocessedImg}
+              alt="Preprocessed preview"
+              className="w-16 h-16 bg-black border border-white/10 rounded"
+              style={{ imageRendering: 'pixelated' }}
+            />
+          </div>
+        )}
 
         <p className="text-xs text-slate-400 leading-relaxed border-t border-white/5 pt-4">
           {activeTab === "webcam" ? (

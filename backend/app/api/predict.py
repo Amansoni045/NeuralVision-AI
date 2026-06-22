@@ -28,6 +28,13 @@ def predict_digit(
     # Run prediction
     res = prediction_service.predict(payload.model_type, preprocessed_img)
     
+    # Generate preprocessed preview base64
+    import cv2
+    img_uint8 = (preprocessed_img.squeeze() * 255).astype(np.uint8)
+    _, encoded_img = cv2.imencode(".png", img_uint8)
+    preprocessed_base64 = base64.b64encode(encoded_img).decode("utf-8")
+    preprocessed_uri = f"data:image/png;base64,{preprocessed_base64}"
+
     # Generate Grad-CAM and activations only for CNN model if requested
     gradcam_img = None
     activation_maps = None
@@ -62,6 +69,7 @@ def predict_digit(
         "latency_ms": res["latency_ms"],
         "gradcam_image": gradcam_img,
         "activation_maps": activation_maps,
+        "preprocessed_image": preprocessed_uri,
         "prediction_id": prediction_id
     }
 

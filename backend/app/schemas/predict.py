@@ -21,6 +21,7 @@ class PredictResponse(BaseModel):
     latency_ms: float
     gradcam_image: Optional[str] = None
     activation_maps: Optional[Dict[str, Any]] = None
+    preprocessed_image: Optional[str] = None
     prediction_id: Optional[int] = None # DB row ID to allow correction later
 
 class BattleArenaResponse(BaseModel):
