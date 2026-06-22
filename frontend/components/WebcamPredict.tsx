@@ -42,6 +42,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play().catch((err) => console.error("Error playing video:", err));
       }
       setCameraActive(true);
       startAnalyzing();
@@ -229,15 +230,14 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
         {activeTab === "webcam" && (
           <div className="w-full flex flex-col items-center">
             <div className="w-full h-72 rounded-2xl glass border border-white/10 flex items-center justify-center relative overflow-hidden bg-black">
-              {cameraActive ? (
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover scale-x-[-1]"
-                />
-              ) : (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className={`w-full h-full object-cover scale-x-[-1] ${cameraActive ? "block" : "hidden"}`}
+              />
+              {!cameraActive && (
                 <div className="flex flex-col items-center">
                   <Video className="h-12 w-12 text-slate-600 mb-2" />
                   <p className="text-sm text-slate-400">Webcam stream inactive</p>
