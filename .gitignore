@@ -1,0 +1,31 @@
+# Data Files
+*.csv
+*.h5
+*.keras
+models/
+data/
+
+# Python environment & cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.ipynb_checkpoints/
+.mlflow/
+mlruns/
+mlflow.db
+
+# Node environment & build
+node_modules/
+.next/
+out/
+build/
+dist/
+.DS_Store
