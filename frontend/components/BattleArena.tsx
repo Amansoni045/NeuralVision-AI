@@ -2,6 +2,8 @@
 
 import { useRef, useState, useEffect } from "react";
 import { Trash2, ShieldAlert, Cpu, Gauge, Layers } from "lucide-react";
+import { API_BASE_URL } from "../config";
+
 
 interface ModelArenaDetail {
   predicted_class: number;
@@ -39,7 +41,7 @@ export default function BattleArena() {
 
   const fetchModelInfo = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/model-info");
+      const res = await fetch(`${API_BASE_URL}/api/v1/model-info`);
       if (res.ok) {
         const data = await res.json();
         setModelInfo(data);
@@ -134,7 +136,7 @@ export default function BattleArena() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8000/api/v1/predict/battle", {
+      const response = await fetch(`${API_BASE_URL}/api/v1/predict/battle`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

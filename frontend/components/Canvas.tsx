@@ -2,6 +2,8 @@
 
 import { useRef, useState, useEffect } from "react";
 import { Trash2, BrainCircuit } from "lucide-react";
+import { API_BASE_URL } from "../config";
+
 import type { XAIPredictionData } from "./XAIModule";
 
 interface CanvasProps {
@@ -148,7 +150,7 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
     if (!hasDrawn) return;
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/predict/canvas", {
+      const response = await fetch(`${API_BASE_URL}/api/v1/predict/canvas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -2,6 +2,8 @@
 
 import { useEffect, useState, Fragment } from "react";
 import { LineChart, BarChart2, CheckSquare, Zap, Activity } from "lucide-react";
+import { API_BASE_URL } from "../config";
+
 
 interface HistoryData {
   loss: number[];
@@ -49,7 +51,7 @@ export default function AnalyticsDashboard() {
 
   const fetchMetrics = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/metrics");
+      const res = await fetch(`${API_BASE_URL}/api/v1/metrics`);
       if (res.ok) {
         const json = await res.json();
         setData(json);

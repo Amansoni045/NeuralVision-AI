@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AlertCircle, CheckCircle, ShieldAlert, SlidersHorizontal, RefreshCw } from "lucide-react";
+import { API_BASE_URL } from "../config";
 
 interface ErrorLog {
   id: number;
@@ -27,13 +28,14 @@ export default function ErrorExplorer() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    // Redirect to dashboard if token exists
     fetchErrors();
   }, []);
 
   const fetchErrors = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/metrics");
+      const res = await fetch(`${API_BASE_URL}/api/v1/metrics`);
       if (res.ok) {
         const json = await res.json();
         setErrors(json.errors || []);
@@ -49,7 +51,7 @@ export default function ErrorExplorer() {
     if (!selectedError || correctValue === null) return;
     setSubmitting(true);
     try {
-      const response = await fetch("http://localhost:8000/api/v1/metrics/correct", {
+      const response = await fetch(`${API_BASE_URL}/api/v1/metrics/correct`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

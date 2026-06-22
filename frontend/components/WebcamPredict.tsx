@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Camera, Image as ImageIcon, Video, StopCircle, RefreshCw } from "lucide-react";
+import { API_BASE_URL } from "../config";
 import type { XAIPredictionData } from "./XAIModule";
+
 
 interface WebcamPredictProps {
   onPredict: (data: XAIPredictionData) => void;
@@ -87,7 +89,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
     const dataUrl = canvas.toDataURL("image/png");
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/predict/canvas", {
+      const response = await fetch(`${API_BASE_URL}/api/v1/predict/canvas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -129,7 +131,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
 
       // Trigger prediction for uploaded image
       try {
-        const response = await fetch("http://localhost:8000/api/v1/predict/canvas", {
+        const response = await fetch(`${API_BASE_URL}/api/v1/predict/canvas`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

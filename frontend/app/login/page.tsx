@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Activity, LogIn, UserPlus, ArrowLeft } from "lucide-react";
+import { API_BASE_URL } from "../../config";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function LoginPage() {
       : { email, password, name };
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1${endpoint}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
