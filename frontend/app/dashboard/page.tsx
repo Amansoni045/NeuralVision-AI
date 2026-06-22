@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { 
   Activity, 
   Brain, 
-  Camera, 
   Cpu, 
   Eye, 
   BarChart2, 
@@ -13,11 +13,15 @@ import {
   LogOut, 
   ChevronRight, 
   Layout,
-  User
+  User,
+  ShieldAlert,
+  LogIn,
+  Sparkles,
+  HelpCircle
 } from "lucide-react";
 
 // Import modules
-import Canvas from "@/components/Canvas";
+import Canvas, { CanvasRef } from "@/components/Canvas";
 import WebcamPredict from "@/components/WebcamPredict";
 import BattleArena from "@/components/BattleArena";
 import XAIModule from "@/components/XAIModule";
@@ -25,8 +29,10 @@ import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import ErrorExplorer from "@/components/ErrorExplorer";
 import type { XAIPredictionData } from "@/components/XAIModule";
 
-export default function Dashboard() {
+function DashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const canvasRef = useRef<CanvasRef>(null);
   
   // Dashboard Tabs / Views
   const [activeTab, setActiveTab] = useState<"sandbox" | "battle" | "xai" | "analytics" | "errors">("sandbox");
@@ -34,16 +40,41 @@ export default function Dashboard() {
   const [selectedModel, setSelectedModel] = useState<string>("cnn");
   // Sandbox prediction trigger (so we can pass latest prediction details to XAIModule)
   const [latestPrediction, setLatestPrediction] = useState<XAIPredictionData | null>(null);
+  
+  const [token, setToken] = useState<string | null>(null);
+  const [isDemoRunning, setIsDemoRunning] = useState(false);
+  const [hoveredTerm, setHoveredTerm] = useState<string | null>(null);
 
-  // Authentication check
+  // Authentication check (non-blocking)
   useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      router.push("/login");
-    }
+    const savedToken = localStorage.getItem("token");
+    setToken(savedToken);
   }, []);
+
+  // Handle URL triggered auto-demo
+  useEffect(() => {
+    const isDemo = searchParams.get("demo") === "true";
+    if (isDemo && canvasRef.current && !isDemoRunning) {
+      setIsDemoRunning(true);
+      setActiveTab("sandbox");
+      setSelectedModel("cnn");
+      
+      // Delay slightly for canvas initialization
+      setTimeout(() => {
+        canvasRef.current?.startDemo(() => {
+          setIsDemoRunning(false);
+          // Automatically switch to Explainable AI tab once drawing and prediction completes
+          setTimeout(() => {
+            setActiveTab("xai");
+          }, 1200);
+        });
+      }, 500);
+    }
+  }, [searchParams, canvasRef]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    setToken(null);
     router.push("/");
   };
 
@@ -51,18 +82,20 @@ export default function Dashboard() {
     setLatestPrediction(data);
   };
 
+  const showGatedLock = !token && (activeTab === "analytics" || activeTab === "errors");
+
   return (
     <div className="min-h-screen bg-background flex text-slate-100 font-sans select-none">
       {/* Sidebar Navigation */}
       <aside className="w-64 bg-[#0a0b12]/80 border-r border-white/5 flex flex-col justify-between p-6 z-10 backdrop-blur-xl">
         <div className="space-y-8">
           {/* Logo */}
-          <div className="flex items-center space-x-2 text-white font-bold text-md tracking-wider">
+          <Link href="/" className="flex items-center space-x-2 text-white font-bold text-md tracking-wider">
             <Activity className="h-5.5 w-5.5 text-cyan-400 glow-pulse" />
             <span className="bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
               NeuralVision AI
             </span>
-          </div>
+          </Link>
 
           {/* Nav Items */}
           <nav className="space-y-1">
@@ -145,16 +178,28 @@ export default function Dashboard() {
             </div>
             <div>
               <div className="text-xs font-semibold text-white">Developer</div>
-              <div className="text-[9px] text-slate-500 font-mono">Status: Authenticated</div>
+              <div className="text-[9px] text-slate-500 font-mono">
+                {token ? "Connected" : "Guest Sandbox"}
+              </div>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-slate-400 hover:text-rose-400 transition-colors rounded-xl hover:bg-rose-500/5 cursor-pointer"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Sign Out</span>
-          </button>
+          {token ? (
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-slate-400 hover:text-rose-400 transition-colors rounded-xl hover:bg-rose-500/5 cursor-pointer"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors rounded-xl hover:bg-cyan-500/5 cursor-pointer"
+            >
+              <LogIn className="h-4 w-4" />
+              <span>Login / Sign Up</span>
+            </Link>
+          )}
         </div>
       </aside>
 
@@ -175,94 +220,147 @@ export default function Dashboard() {
 
           {/* Dynamic control for sandbox active model selector */}
           {activeTab === "sandbox" && (
-            <div className="flex items-center space-x-2">
-              <span className="text-[10px] text-slate-500 font-mono uppercase">Active Model:</span>
+            <div className="flex items-center space-x-3 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-white/5 relative">
+              <span className="text-[10px] text-slate-500 font-mono uppercase">Neural Model:</span>
               <select
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
-                className="bg-slate-950/80 border border-white/5 rounded-lg px-3 py-1 text-xs text-slate-300 outline-none cursor-pointer hover:border-cyan-500/20"
+                className="bg-slate-950 border border-white/10 rounded px-2 py-0.5 text-xs text-cyan-400 outline-none cursor-pointer hover:border-cyan-500/20"
               >
-                <option value="perceptron">Perceptron</option>
-                <option value="ann">ANN (Dense)</option>
                 <option value="cnn">CNN (Champion)</option>
+                <option value="ann">ANN (Dense)</option>
+                <option value="perceptron">Perceptron</option>
               </select>
+              
+              <div
+                onMouseEnter={() => setHoveredTerm(selectedModel)}
+                onMouseLeave={() => setHoveredTerm(null)}
+                className="cursor-help text-slate-400 hover:text-white"
+              >
+                <HelpCircle className="h-3.5 w-3.5" />
+              </div>
+
+              {hoveredTerm && (
+                <div className="absolute right-0 top-10 w-64 bg-slate-950/95 border border-white/10 p-3 rounded-xl shadow-2xl z-50 text-[11px] text-slate-300 leading-normal font-sans">
+                  {selectedModel === "cnn" && "CNN (Convolutional Neural Network): Scans the canvas segments. Excels at extracting shape curves and diagonals."}
+                  {selectedModel === "ann" && "ANN (Dense): Flat layer representation. Looks at pixels individually without spatial connections."}
+                  {selectedModel === "perceptron" && "Perceptron: Simplest structure. Runs a simple linear decision boundary."}
+                </div>
+              )}
             </div>
           )}
         </header>
 
         {/* View Port Panel */}
         <div className="flex-1 p-8 max-w-6xl w-full mx-auto">
-          {activeTab === "sandbox" && (
-            <div className="space-y-12">
-              <div>
-                <h3 className="text-xl font-bold tracking-tight text-white mb-2">Digit Input Workspace</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Draw a digit in the drawing box, or toggle to the Media tab to capture camera frames or upload local images.
-                </p>
-              </div>
-
-              {/* View 1: Canvas Drawing */}
-              <div className="glass p-8 rounded-3xl border border-white/5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 h-40 w-40 bg-cyan-500/5 rounded-bl-full filter blur-2xl" />
-                <Canvas onPredict={handlePredictionCallback} selectedModel={selectedModel} />
-              </div>
-
-              {/* View 2: Webcam & File Upload */}
-              <div className="glass p-8 rounded-3xl border border-white/5">
-                <WebcamPredict onPredict={handlePredictionCallback} selectedModel={selectedModel} />
-              </div>
+          {showGatedLock ? (
+            /* Database progressive gate overlay */
+            <div className="flex flex-col items-center justify-center p-12 text-center border border-white/5 rounded-3xl glass h-[400px] relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-40 w-40 bg-rose-500/5 rounded-bl-full filter blur-2xl" />
+              <ShieldAlert className="h-12 w-12 text-rose-400 mb-4 animate-pulse" />
+              <h4 className="text-lg font-bold text-white mb-2">Database Logging Access Required</h4>
+              <p className="text-xs text-slate-400 max-w-sm leading-relaxed mb-6">
+                To view persistent training curves, flag incorrect predictions, and log history tables, you must connect to the secure relational database.
+              </p>
+              <Link
+                href="/login"
+                className="px-6 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl flex items-center space-x-2 transition-colors cursor-pointer"
+              >
+                <LogIn className="h-4 w-4" />
+                <span>Login or Sign Up</span>
+              </Link>
             </div>
-          )}
+          ) : (
+            <>
+              {activeTab === "sandbox" && (
+                <div className="space-y-12">
+                  <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                    <div>
+                      <h3 className="text-xl font-bold tracking-tight text-white">Digit Input Workspace</h3>
+                      <p className="text-xs text-slate-400">
+                        Draw a digit inside the box. Visual explanations (XAI) will compute automatically when you release.
+                      </p>
+                    </div>
+                    {isDemoRunning && (
+                      <div className="flex items-center space-x-2 px-3 py-1 bg-cyan-950/30 border border-cyan-500/20 rounded-full text-[10px] text-cyan-400 font-mono">
+                        <span className="h-1.5 w-1.5 bg-cyan-400 rounded-full animate-ping" />
+                        <span>Autoplaying Demo...</span>
+                      </div>
+                    )}
+                  </div>
 
-          {activeTab === "battle" && (
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xl font-bold tracking-tight text-white mb-2">Model Battle Arena</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Compare all three network architectures side-by-side. View parallel classification predictions, confidence metrics, parameter counts, and real-time execution speeds.
-                </p>
-              </div>
-              <BattleArena />
-            </div>
-          )}
+                  {/* View 1: Canvas Drawing */}
+                  <div className="glass p-8 rounded-3xl border border-white/5 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 h-40 w-40 bg-cyan-500/5 rounded-bl-full filter blur-2xl pointer-events-none" />
+                    <Canvas ref={canvasRef} onPredict={handlePredictionCallback} selectedModel={selectedModel} />
+                  </div>
 
-          {activeTab === "xai" && (
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xl font-bold tracking-tight text-white mb-2">Explainable AI (XAI)</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Inspect the convolutional layer activation maps and Grad-CAM visual overlays. See exactly which regions of your digit triggered the CNN prediction.
-                </p>
-              </div>
-              <XAIModule predictionData={latestPrediction} />
-            </div>
-          )}
+                  {/* View 2: Webcam & File Upload */}
+                  <div className="glass p-8 rounded-3xl border border-white/5">
+                    <WebcamPredict onPredict={handlePredictionCallback} selectedModel={selectedModel} />
+                  </div>
+                </div>
+              )}
 
-          {activeTab === "analytics" && (
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xl font-bold tracking-tight text-white mb-2">Training & MLOps Analytics</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Analyze training curves, loss histories, accuracy scores, and interactive confusion matrices logged during model training runs.
-                </p>
-              </div>
-              <AnalyticsDashboard />
-            </div>
-          )}
+              {activeTab === "battle" && (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-xl font-bold tracking-tight text-white mb-2">Model Battle Arena</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Compare all three network architectures side-by-side. View parallel classification predictions, confidence metrics, parameter counts, and real-time execution speeds.
+                    </p>
+                  </div>
+                  <BattleArena />
+                </div>
+              )}
 
-          {activeTab === "errors" && (
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xl font-bold tracking-tight text-white mb-2">Error Explorer</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Review incorrect predictions logged during your sandbox runs. Filter by class, and flag the true labels to dynamically update the analytics hub.
-                </p>
-              </div>
-              <ErrorExplorer />
-            </div>
+              {activeTab === "xai" && (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-xl font-bold tracking-tight text-white mb-2">Explainable AI (XAI)</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Inspect the convolutional layer activation maps and Grad-CAM visual overlays. See exactly which regions of your digit triggered the CNN prediction.
+                    </p>
+                  </div>
+                  <XAIModule predictionData={latestPrediction} />
+                </div>
+              )}
+
+              {activeTab === "analytics" && (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-xl font-bold tracking-tight text-white mb-2">Training & MLOps Analytics</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Analyze training curves, loss histories, accuracy scores, and interactive confusion matrices logged during model training runs.
+                    </p>
+                  </div>
+                  <AnalyticsDashboard />
+                </div>
+              )}
+
+              {activeTab === "errors" && (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-xl font-bold tracking-tight text-white mb-2">Error Explorer</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Review incorrect predictions logged during your sandbox runs. Filter by class, and flag the true labels to dynamically update the analytics hub.
+                    </p>
+                  </div>
+                  <ErrorExplorer />
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#06070d]" />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
