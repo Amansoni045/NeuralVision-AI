@@ -23,6 +23,7 @@ import BattleArena from "@/components/BattleArena";
 import XAIModule from "@/components/XAIModule";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import ErrorExplorer from "@/components/ErrorExplorer";
+import type { XAIPredictionData } from "@/components/XAIModule";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function Dashboard() {
   // Canvas model selection (inside sandbox)
   const [selectedModel, setSelectedModel] = useState<string>("cnn");
   // Sandbox prediction trigger (so we can pass latest prediction details to XAIModule)
-  const [latestPrediction, setLatestPrediction] = useState<any>(null);
+  const [latestPrediction, setLatestPrediction] = useState<XAIPredictionData | null>(null);
 
   // Authentication check
   useEffect(() => {
@@ -46,7 +47,7 @@ export default function Dashboard() {
     router.push("/");
   };
 
-  const handlePredictionCallback = (data: any) => {
+  const handlePredictionCallback = (data: XAIPredictionData) => {
     setLatestPrediction(data);
   };
 

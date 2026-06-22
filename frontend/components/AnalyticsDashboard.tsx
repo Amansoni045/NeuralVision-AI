@@ -35,10 +35,13 @@ interface AnalyticsData {
   };
 }
 
+const MODEL_NAMES = ["perceptron", "ann", "cnn"] as const;
+type ModelName = (typeof MODEL_NAMES)[number];
+
 export default function AnalyticsDashboard() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeModel, setActiveModel] = useState<"perceptron" | "ann" | "cnn">("cnn");
+  const [activeModel, setActiveModel] = useState<ModelName>("cnn");
 
   useEffect(() => {
     fetchMetrics();
@@ -163,10 +166,10 @@ export default function AnalyticsDashboard() {
 
       {/* Model Selection Tabs */}
       <div className="flex justify-between items-center bg-slate-950/80 border border-white/5 p-1 rounded-2xl self-start">
-        {["perceptron", "ann", "cnn"].map((m) => (
+        {MODEL_NAMES.map((m) => (
           <button
             key={m}
-            onClick={() => setActiveModel(m as any)}
+            onClick={() => setActiveModel(m)}
             className={`px-5 py-2 text-xs font-mono rounded-xl transition-all cursor-pointer ${
               activeModel === m
                 ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
