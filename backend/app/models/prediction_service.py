@@ -52,6 +52,32 @@ class PredictionService:
         model.compile(optimizer="sgd", loss="categorical_crossentropy", metrics=["accuracy"])
         return model
 
+    def train_model_on_mnist(self, model, save_path):
+        print(f"Starting automatic fallback training on MNIST for {save_path}...")
+        try:
+            (X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data()
+            X_train = X_train.astype("float32") / 255.0
+            X_test = X_test.astype("float32") / 255.0
+            X_train = np.expand_dims(X_train, -1)
+            X_test = np.expand_dims(X_test, -1)
+            y_train_cat = tf.keras.utils.to_categorical(y_train, 10)
+            y_test_cat = tf.keras.utils.to_categorical(y_test, 10)
+            
+            # Simple models train in seconds on CPU
+            model.fit(
+                X_train, y_train_cat,
+                epochs=3,
+                batch_size=128,
+                validation_data=(X_test, y_test_cat),
+                verbose=0
+            )
+            model.save(save_path)
+            print(f"Fallback training complete. Model saved to {save_path}")
+            return True
+        except Exception as train_error:
+            print(f"Fallback training failed: {train_error}")
+            return False
+
     def load_all_models(self):
         # Paths to saved models
         perceptron_path = os.path.join(settings.MODEL_DIR, "perceptron.keras")
@@ -65,14 +91,21 @@ class PredictionService:
                 print("Perceptron model loaded successfully.")
                 self.model_status["perceptron"] = {"status": "loaded", "error": None}
             except Exception as e:
-                print(f"Error loading Perceptron: {e}. Reinitializing...")
+                print(f"Error loading Perceptron: {e}. Running fallback training...")
                 self.perceptron = self.build_perceptron()
-                self.model_status["perceptron"] = {"status": "failed_load_reinitialized", "error": str(e)}
+                success = self.train_model_on_mnist(self.perceptron, perceptron_path)
+                self.model_status["perceptron"] = {
+                    "status": "fallback_trained" if success else "failed_load_reinitialized",
+                    "error": str(e)
+                }
         else:
             self.perceptron = self.build_perceptron()
-            self.perceptron.save(perceptron_path)
+            success = self.train_model_on_mnist(self.perceptron, perceptron_path)
             print("Perceptron model initialized and saved.")
-            self.model_status["perceptron"] = {"status": "initialized_new", "error": None}
+            self.model_status["perceptron"] = {
+                "status": "fallback_trained" if success else "initialized_new",
+                "error": None
+            }
 
         if os.path.exists(ann_path):
             try:
@@ -80,14 +113,21 @@ class PredictionService:
                 print("ANN model loaded successfully.")
                 self.model_status["ann"] = {"status": "loaded", "error": None}
             except Exception as e:
-                print(f"Error loading ANN: {e}. Reinitializing...")
+                print(f"Error loading ANN: {e}. Running fallback training...")
                 self.ann = self.build_ann()
-                self.model_status["ann"] = {"status": "failed_load_reinitialized", "error": str(e)}
+                success = self.train_model_on_mnist(self.ann, ann_path)
+                self.model_status["ann"] = {
+                    "status": "fallback_trained" if success else "failed_load_reinitialized",
+                    "error": str(e)
+                }
         else:
             self.ann = self.build_ann()
-            self.ann.save(ann_path)
+            success = self.train_model_on_mnist(self.ann, ann_path)
             print("ANN model initialized and saved.")
-            self.model_status["ann"] = {"status": "initialized_new", "error": None}
+            self.model_status["ann"] = {
+                "status": "fallback_trained" if success else "initialized_new",
+                "error": None
+            }
 
         if os.path.exists(cnn_path):
             try:
@@ -95,14 +135,21 @@ class PredictionService:
                 print("CNN model loaded successfully.")
                 self.model_status["cnn"] = {"status": "loaded", "error": None}
             except Exception as e:
-                print(f"Error loading CNN: {e}. Reinitializing...")
+                print(f"Error loading CNN: {e}. Running fallback training...")
                 self.cnn = self.build_cnn()
-                self.model_status["cnn"] = {"status": "failed_load_reinitialized", "error": str(e)}
+                success = self.train_model_on_mnist(self.cnn, cnn_path)
+                self.model_status["cnn"] = {
+                    "status": "fallback_trained" if success else "failed_load_reinitialized",
+                    "error": str(e)
+                }
         else:
             self.cnn = self.build_cnn()
-            self.cnn.save(cnn_path)
+            success = self.train_model_on_mnist(self.cnn, cnn_path)
             print("CNN model initialized and saved.")
-            self.model_status["cnn"] = {"status": "initialized_new", "error": None}
+            self.model_status["cnn"] = {
+                "status": "fallback_trained" if success else "initialized_new",
+                "error": None
+            }
 
         # Force a forward pass to initialize Keras symbolic input and output nodes (fixes Grad-CAM bug)
         dummy_input = np.zeros((1, 28, 28, 1), dtype=np.float32)
