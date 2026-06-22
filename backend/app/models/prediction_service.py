@@ -101,7 +101,8 @@ class PredictionService:
 
     def preprocess_image(self, base64_str: str) -> np.ndarray:
         """
-        Decode a base64 image, convert to grayscale, resize to 28x28, 
+        Decode a base64 image, crop the digit, resize it to fit in a 20x20 box
+        preserving aspect ratio, center it in a 28x28 image using center of mass,
         normalize and return as shape (28, 28, 1).
         """
         # Decode base64 image
@@ -114,38 +115,82 @@ class PredictionService:
 
         # Handle RGBA/RGB channels
         if len(img.shape) == 3 and img.shape[2] == 4:
-            # Extract alpha channel if transparency exists, or convert to gray
-            # If drawing on a transparent canvas, draw brush strokes might be colored and background alpha is 0
-            # Let's check if the alpha channel is active
             alpha = img[:, :, 3]
-            # Replace transparent parts with black, and non-transparent with gray/white
             gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
-            # Use alpha channel mask to ensure background is black
             gray = cv2.bitwise_and(gray, gray, mask=alpha)
         elif len(img.shape) == 3:
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         else:
             gray = img
 
-        # Resize to 28x28 using cubic interpolation for smoother edges
-        resized = cv2.resize(gray, (28, 28), interpolation=cv2.INTER_CUBIC)
-
         # MNIST is white digits on black background.
         # Check if the drawing background is light or dark.
-        # Calculate mean intensity of corners/edges to determine background color.
         edge_pixels = np.concatenate([
-            resized[0, :], resized[-1, :], resized[:, 0], resized[:, -1]
+            gray[0, :], gray[-1, :], gray[:, 0], gray[:, -1]
         ])
         edge_mean = np.mean(edge_pixels)
-        
         if edge_mean > 127:
-            # Background is light (white canvas with black drawing), invert colors
-            resized = cv2.bitwise_not(resized)
+            gray = cv2.bitwise_not(gray)
+
+        # Find the bounding box of the digit
+        # Threshold first to get a clean binary mask
+        _, thresh = cv2.threshold(gray, 20, 255, cv2.THRESH_BINARY)
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        if len(contours) > 0:
+            # Get bounding box of the largest contour (the digit)
+            c = max(contours, key=cv2.contourArea)
+            x, y, w, h = cv2.boundingRect(c)
+            
+            # Crop the digit with a small margin
+            margin = 2
+            x_start = max(0, x - margin)
+            y_start = max(0, y - margin)
+            x_end = min(gray.shape[1], x + w + margin)
+            y_end = min(gray.shape[0], y + h + margin)
+            cropped = gray[y_start:y_end, x_start:x_end]
+
+            # Resize the cropped digit to fit within 20x20
+            # keeping the aspect ratio
+            if w > h:
+                new_w = 20
+                new_h = int(20 * (h / w))
+                if new_h < 1: new_h = 1
+                resized_digit = cv2.resize(cropped, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            else:
+                new_h = 20
+                new_w = int(20 * (w / h))
+                if new_w < 1: new_w = 1
+                resized_digit = cv2.resize(cropped, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+            # Create a blank 28x28 background
+            mnist_img = np.zeros((28, 28), dtype=np.uint8)
+            
+            # Calculate where to place the 20x20 digit inside 28x28
+            # Standard MNIST centering is done using the center of mass
+            M = cv2.moments(resized_digit)
+            if M["m00"] > 0:
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+            else:
+                cx = resized_digit.shape[1] // 2
+                cy = resized_digit.shape[0] // 2
+
+            # Place the resized digit such that its center of mass aligns with the center of the 28x28 image (14, 14)
+            dx = 14 - cx
+            dy = 14 - cy
+            
+            # Bound shift to keep it within image limits
+            dx = max(0, min(28 - resized_digit.shape[1], dx))
+            dy = max(0, min(28 - resized_digit.shape[0], dy))
+
+            mnist_img[dy:dy+resized_digit.shape[0], dx:dx+resized_digit.shape[1]] = resized_digit
+        else:
+            # Fallback if no contours found
+            mnist_img = cv2.resize(gray, (28, 28), interpolation=cv2.INTER_AREA)
 
         # Normalize to [0, 1]
-        normalized = resized.astype("float32") / 255.0
-        
-        # Reshape to (28, 28, 1)
+        normalized = mnist_img.astype("float32") / 255.0
         normalized = np.expand_dims(normalized, axis=-1)
         
         return normalized

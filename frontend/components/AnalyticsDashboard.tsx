@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { LineChart, BarChart2, CheckSquare, Zap, Activity } from "lucide-react";
 
 interface HistoryData {
@@ -201,9 +201,9 @@ export default function AnalyticsDashboard() {
 
               {/* Rows */}
               {matrix.map((row, rowIdx) => (
-                <>
+                <Fragment key={`matrix-row-${rowIdx}`}>
                   {/* Row label */}
-                  <div key={`row-${rowIdx}`} className="text-center font-mono text-xs text-slate-400 flex items-center justify-center font-bold">
+                  <div className="text-center font-mono text-xs text-slate-400 flex items-center justify-center font-bold">
                     {rowIdx}
                   </div>
                   {/* Cell grid */}
@@ -231,7 +231,7 @@ export default function AnalyticsDashboard() {
                       </div>
                     );
                   })}
-                </>
+                </Fragment>
               ))}
             </div>
             <p className="text-[10px] text-slate-500 text-center leading-relaxed">

@@ -1,8 +1,8 @@
+import tensorflow as tf
 import os
 import json
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Flatten, Conv2D, MaxPooling2D, Dropout
 from tensorflow.keras.utils import to_categorical
@@ -10,6 +10,7 @@ from sklearn.metrics import classification_report, confusion_matrix, precision_r
 import mlflow
 import mlflow.keras
 from backend.app.core.config import settings
+
 
 def load_data():
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

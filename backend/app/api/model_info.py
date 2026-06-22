@@ -25,10 +25,15 @@ def get_model_info():
             layers = []
             for layer in model.layers:
                 layer_config = layer.get_config()
+                try:
+                    output_shape = layer.output_shape
+                except AttributeError:
+                    output_shape = None
+                
                 layers.append({
                     "name": layer.name,
                     "class_name": layer.__class__.__name__,
-                    "output_shape": layer.output_shape,
+                    "output_shape": output_shape,
                     "trainable": layer.trainable,
                     "config": {k: v for k, v in layer_config.items() if isinstance(v, (int, float, str, bool, list, dict))}
                 })
