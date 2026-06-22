@@ -1,4 +1,14 @@
+---
+title: NeuralVision Backend
+emoji: 👁️
+colorFrom: cyan
+colorTo: indigo
+sdk: docker
+app_port: 8000
+---
+
 # NeuralVision AI
+
 
 NeuralVision AI is a production-grade, end-to-end deep learning platform and microservices ecosystem designed for handwritten digit classification, real-time performance benchmarking, and neural network explainability.
 
