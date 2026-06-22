@@ -49,7 +49,7 @@ class PredictionService:
             Dropout(0.5),
             Dense(10, activation="softmax")
         ])
-        model.compile(optimizer="sgd", loss="categorical_crossentropy", metrics=["accuracy"])
+        model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
         return model
 
     def train_model_on_mnist(self, model, save_path):
@@ -63,13 +63,13 @@ class PredictionService:
             y_train_cat = tf.keras.utils.to_categorical(y_train, 10)
             y_test_cat = tf.keras.utils.to_categorical(y_test, 10)
             
-            # Simple models train in seconds on CPU
+            # Train for 5 epochs - Adam models converge quickly and reliably on MNIST
             model.fit(
                 X_train, y_train_cat,
-                epochs=3,
+                epochs=5,
                 batch_size=128,
                 validation_data=(X_test, y_test_cat),
-                verbose=0
+                verbose=1
             )
             model.save(save_path)
             print(f"Fallback training complete. Model saved to {save_path}")

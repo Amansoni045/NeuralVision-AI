@@ -8,7 +8,7 @@ from backend.app.core.database import get_db
 from backend.app.core.security import verify_password, get_password_hash, create_access_token, ALGORITHM
 from backend.app.core.config import settings
 from backend.app.db.models import User
-from backend.app.schemas.auth import UserCreate, UserResponse, Token, TokenData
+from backend.app.schemas.auth import UserCreate, UserResponse, Token, TokenData, LoginRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -56,7 +56,7 @@ def signup(user_in: UserCreate, db: Session = Depends(get_db)):
     return db_user
 
 @router.post("/login", response_model=Token)
-def login(user_in: UserCreate, db: Session = Depends(get_db)):
+def login(user_in: LoginRequest, db: Session = Depends(get_db)):
     # Authenticate user
     user = db.query(User).filter(User.email == user_in.email).first()
     if not user or not verify_password(user_in.password, user.hashed_password):

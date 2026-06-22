@@ -29,7 +29,7 @@ export default function LoginPage() {
 
     const endpoint = isLogin ? "/auth/login" : "/auth/signup";
     const body = isLogin 
-      ? { email, password, name: "Login" } 
+      ? { email, password } 
       : { email, password, name };
 
     try {
