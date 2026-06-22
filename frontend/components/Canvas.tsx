@@ -2,10 +2,18 @@
 
 import { useRef, useState, useEffect } from "react";
 import { Trash2, BrainCircuit } from "lucide-react";
+import type { XAIPredictionData } from "./XAIModule";
 
 interface CanvasProps {
-  onPredict: (data: any) => void;
+  onPredict: (data: XAIPredictionData) => void;
   selectedModel: string;
+}
+
+interface InferenceResponse extends XAIPredictionData {
+  predicted_class: number;
+  confidence: number;
+  all_confidences: number[];
+  latency_ms: number;
 }
 
 export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
@@ -152,7 +160,7 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
 
       if (!response.ok) throw new Error("Prediction API error");
 
-      const data = await response.json();
+      const data = (await response.json()) as InferenceResponse;
       setPrediction(data.predicted_class);
       setConfidence(data.confidence);
       setConfidences(data.all_confidences);
@@ -269,6 +277,6 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
 }
 
 // Print helper since we used "print"
-function print(...args: any[]) {
+function print(...args: unknown[]) {
   console.log(...args);
 }

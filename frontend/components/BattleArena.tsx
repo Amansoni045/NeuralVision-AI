@@ -17,13 +17,19 @@ interface BattleResult {
   log_id: number;
 }
 
+interface ModelInfo {
+  perceptron?: { total_parameters?: number };
+  ann?: { total_parameters?: number };
+  cnn?: { total_parameters?: number };
+}
+
 export default function BattleArena() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(16);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<BattleResult | null>(null);
-  const [modelInfo, setModelInfo] = useState<any>(null);
+  const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
 
   // Load model structures on mount
   useEffect(() => {

@@ -2,10 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Camera, Image as ImageIcon, Video, StopCircle, RefreshCw } from "lucide-react";
+import type { XAIPredictionData } from "./XAIModule";
 
 interface WebcamPredictProps {
-  onPredict: (data: any) => void;
+  onPredict: (data: XAIPredictionData) => void;
   selectedModel: string;
+}
+
+interface InferenceResponse extends XAIPredictionData {
+  predicted_class: number;
+  confidence: number;
+  latency_ms: number;
 }
 
 export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredictProps) {
@@ -92,7 +99,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
 
       if (!response.ok) throw new Error("API error");
 
-      const data = await response.json();
+      const data = (await response.json()) as InferenceResponse;
       setPrediction(data.predicted_class);
       setConfidence(data.confidence);
       setLatency(data.latency_ms);
@@ -134,7 +141,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
 
         if (!response.ok) throw new Error("API error");
 
-        const data = await response.json();
+        const data = (await response.json()) as InferenceResponse;
         setPrediction(data.predicted_class);
         setConfidence(data.confidence);
         setLatency(data.latency_ms);

@@ -54,8 +54,8 @@ export default function LoginPage() {
         setIsLogin(true);
         setErrorMsg("Account created successfully! Please log in.");
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || "An error occurred. Please try again.");
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

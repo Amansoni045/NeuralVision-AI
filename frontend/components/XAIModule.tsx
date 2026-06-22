@@ -4,7 +4,18 @@ import { useState } from "react";
 import { Info, HelpCircle, Eye } from "lucide-react";
 
 interface XAIModuleProps {
-  predictionData: any;
+  predictionData: XAIPredictionData | null;
+}
+
+interface ActivationLayer {
+  num_filters: number;
+  filters: string[];
+}
+
+export interface XAIPredictionData {
+  image_data?: string;
+  gradcam_image?: string;
+  activation_maps?: Record<string, ActivationLayer>;
 }
 
 export default function XAIModule({ predictionData }: XAIModuleProps) {
@@ -16,7 +27,7 @@ export default function XAIModule({ predictionData }: XAIModuleProps) {
       <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-white/5 rounded-2xl glass h-96">
         <Eye className="h-10 w-10 text-slate-600 mb-3" />
         <p className="text-slate-400 text-sm max-w-sm">
-          Draw a digit or upload an image in the Sandbox to inspect the CNN's decision-making process.
+          Draw a digit or upload an image in the Sandbox to inspect the CNN&apos;s decision-making process.
         </p>
       </div>
     );
