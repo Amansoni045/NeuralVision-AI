@@ -141,7 +141,8 @@ export default function BattleArena() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           image_data: dataUrl,
-          source: "canvas"
+          source: "canvas",
+          explain: false // Disable expensive visualization computations as Battle Arena doesn't display them
         })
       });
 

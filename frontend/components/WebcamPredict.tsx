@@ -95,7 +95,8 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
         body: JSON.stringify({
           image_data: dataUrl,
           source: "webcam",
-          model_type: selectedModel
+          model_type: selectedModel,
+          explain: false // Disable expensive explainability maps for live webcam polling
         })
       });
 
@@ -137,7 +138,8 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
           body: JSON.stringify({
             image_data: dataUrl,
             source: "upload",
-            model_type: selectedModel
+            model_type: selectedModel,
+            explain: true // Enable explainability maps for upload
           })
         });
 

@@ -28,10 +28,10 @@ def predict_digit(
     # Run prediction
     res = prediction_service.predict(payload.model_type, preprocessed_img)
     
-    # Generate Grad-CAM and activations only for CNN model
+    # Generate Grad-CAM and activations only for CNN model if requested
     gradcam_img = None
     activation_maps = None
-    if payload.model_type == "cnn" and prediction_service.cnn is not None:
+    if payload.explain and payload.model_type == "cnn" and prediction_service.cnn is not None:
         gradcam_img = generate_gradcam_base64(prediction_service.cnn, preprocessed_img)
         activation_maps = get_activation_maps(prediction_service.cnn, preprocessed_img)
         
@@ -105,10 +105,10 @@ def predict_battle(
     ann_res = prediction_service.predict("ann", preprocessed_img)
     cnn_res = prediction_service.predict("cnn", preprocessed_img)
     
-    # Generate Grad-CAM and activations for CNN
+    # Generate Grad-CAM and activations for CNN if requested
     gradcam_img = None
     activation_maps = None
-    if prediction_service.cnn is not None:
+    if payload.explain and prediction_service.cnn is not None:
         gradcam_img = generate_gradcam_base64(prediction_service.cnn, preprocessed_img)
         activation_maps = get_activation_maps(prediction_service.cnn, preprocessed_img)
         

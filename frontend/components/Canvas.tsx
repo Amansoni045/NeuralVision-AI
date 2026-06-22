@@ -101,16 +101,16 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
     ctx.lineTo(coords.x, coords.y);
     ctx.stroke();
 
-    // Trigger real-time prediction with throttle
+    // Trigger real-time prediction with throttle (without explain features)
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      triggerPrediction();
-    }, 150); // Throttled at 150ms
+      triggerPrediction(false);
+    }, 120); // Fast throttled updates
   };
 
   const stopDrawing = () => {
     setIsDrawing(false);
-    triggerPrediction();
+    triggerPrediction(true); // Full prediction with explain features
   };
 
   const clearCanvas = () => {
@@ -129,7 +129,7 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
     setLatency(null);
   };
 
-  const triggerPrediction = async () => {
+  const triggerPrediction = async (shouldExplain: boolean = false) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -156,7 +156,8 @@ export default function Canvas({ onPredict, selectedModel }: CanvasProps) {
         body: JSON.stringify({
           image_data: dataUrl,
           source: "canvas",
-          model_type: selectedModel
+          model_type: selectedModel,
+          explain: shouldExplain
         })
       });
 

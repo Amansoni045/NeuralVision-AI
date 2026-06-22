@@ -5,6 +5,8 @@ class PredictRequest(BaseModel):
     image_data: str # Base64 data URI
     source: str # "canvas", "upload", "webcam"
     model_type: str = "cnn" # "perceptron", "ann", "cnn"
+    explain: bool = True
+
 
 class ModelPredictionDetail(BaseModel):
     predicted_class: int

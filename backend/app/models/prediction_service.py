@@ -275,7 +275,8 @@ class PredictionService:
             raise ValueError(f"Unknown model type: {model_type}")
 
         start_time = time.time()
-        predictions = model.predict(input_data, verbose=0)[0]
+        # Direct function call model(input, training=False) is up to 50x faster than model.predict(input) for single inputs
+        predictions = model(input_data, training=False).numpy()[0]
         end_time = time.time()
 
         latency_ms = (end_time - start_time) * 1000.0
