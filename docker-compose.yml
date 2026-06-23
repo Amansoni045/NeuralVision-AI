@@ -22,7 +22,7 @@ services:
     image: ghcr.io/mlflow/mlflow:v2.11.0
     container_name: nv_mlflow_server
     ports:
-      - "5000:5000"
+      - "5005:5000"
     volumes:
       - mlflow_data:/mlflow
     command: mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlflow --host 0.0.0.0 --port 5000
