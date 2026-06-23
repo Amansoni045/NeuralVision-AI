@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { AlertCircle, ShieldAlert, SlidersHorizontal, RefreshCw } from "lucide-react";
 import { API_BASE_URL } from "../config";
 
@@ -21,6 +22,7 @@ export default function ErrorExplorer() {
   const [modelFilter, setModelFilter] = useState<string>("all");
   const [predictedFilter, setPredictedFilter] = useState<string>("all");
   const [actualFilter, setActualFilter] = useState<string>("all");
+  const [isGuest, setIsGuest] = useState(true);
   
   // Correction dialog/state
   const [selectedError, setSelectedError] = useState<ErrorLog | null>(null);
@@ -35,7 +37,13 @@ export default function ErrorExplorer() {
   const fetchErrors = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/metrics`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+      setIsGuest(!token);
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${API_BASE_URL}/api/v1/metrics`, { headers });
       if (res.ok) {
         const json = await res.json();
         setErrors(json.errors || []);
@@ -51,9 +59,14 @@ export default function ErrorExplorer() {
     if (!selectedError || correctValue === null) return;
     setSubmitting(true);
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
       const response = await fetch(`${API_BASE_URL}/api/v1/metrics/correct`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           prediction_id: selectedError.id,
           actual_label: correctValue,
@@ -86,6 +99,17 @@ export default function ErrorExplorer() {
 
   return (
     <div className="w-full flex flex-col gap-6">
+      {isGuest && (
+        <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-amber-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+          <div className="flex items-center space-x-2">
+            <span className="h-1.5 w-1.5 bg-amber-400 rounded-full animate-ping shrink-0" />
+            <span><strong>Guest Sandbox:</strong> You are viewing global guest incorrect prediction logs. Log in to save and correct your personal predictions permanently.</span>
+          </div>
+          <Link href="/login" className="px-3.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 font-bold font-mono rounded-lg border border-amber-500/20 transition-all text-[10px] uppercase tracking-wider text-center shrink-0">
+            Sign In / Register
+          </Link>
+        </div>
+      )}
       {/* Filtering Header Toolbar */}
       <div className="glass p-5 rounded-2xl border border-white/5 flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div className="flex items-center space-x-2">

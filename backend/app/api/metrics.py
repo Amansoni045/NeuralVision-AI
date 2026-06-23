@@ -3,11 +3,13 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from typing import Optional
 
 from backend.app.core.database import get_db
 from backend.app.core.config import settings
-from backend.app.db.models import PredictionHistory, BattleArenaLog
+from backend.app.db.models import User, PredictionHistory, BattleArenaLog
 from backend.app.schemas.predict import CorrectRequest
+from backend.app.api.predict import get_optional_user
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
@@ -94,7 +96,10 @@ DEFAULT_METRICS = {
 }
 
 @router.get("")
-def get_metrics(db: Session = Depends(get_db)):
+def get_metrics(
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user)
+):
     # 1. Load Local Model Metrics
     metrics_path = os.path.join(settings.MODEL_DIR, "metrics.json")
     model_metrics = DEFAULT_METRICS
@@ -105,29 +110,38 @@ def get_metrics(db: Session = Depends(get_db)):
         except Exception as e:
             print(f"Error loading metrics.json: {e}")
 
-    # 2. Query prediction statistics from database
+    # 2. Query prediction statistics from database (filtered by current authenticated user)
+    user_id_filter = current_user.id if current_user else None
+    
     total_predictions = 0
     predictions_by_source = {}
     class_distribution = {}
     error_count = 0
     
     try:
-        total_predictions = db.query(func.count(PredictionHistory.id)).scalar()
+        total_predictions = db.query(func.count(PredictionHistory.id)).filter(
+            PredictionHistory.user_id == user_id_filter
+        ).scalar()
         
         # Predictions by source (canvas, webcam, upload)
         source_stats = db.query(
             PredictionHistory.source, func.count(PredictionHistory.id)
+        ).filter(
+            PredictionHistory.user_id == user_id_filter
         ).group_by(PredictionHistory.source).all()
         predictions_by_source = {src: count for src, count in source_stats}
         
         # Predicted class distribution (for charts)
         class_stats = db.query(
             PredictionHistory.predicted_label, func.count(PredictionHistory.id)
+        ).filter(
+            PredictionHistory.user_id == user_id_filter
         ).group_by(PredictionHistory.predicted_label).all()
         class_distribution = {label: count for label, count in class_stats}
         
         # Count of flagged errors (where actual_label != predicted_label)
         error_count = db.query(func.count(PredictionHistory.id)).filter(
+            PredictionHistory.user_id == user_id_filter,
             PredictionHistory.actual_label != None,
             PredictionHistory.actual_label != PredictionHistory.predicted_label
         ).scalar()
@@ -138,6 +152,7 @@ def get_metrics(db: Session = Depends(get_db)):
     error_logs = []
     try:
         query_logs = db.query(PredictionHistory).filter(
+            PredictionHistory.user_id == user_id_filter,
             PredictionHistory.actual_label != None,
             PredictionHistory.actual_label != PredictionHistory.predicted_label
         ).order_by(PredictionHistory.created_at.desc()).limit(50).all()

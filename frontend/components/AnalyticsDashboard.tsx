@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, Fragment } from "react";
+import Link from "next/link";
 import { LineChart, BarChart2, CheckSquare, Zap, Activity } from "lucide-react";
 import { API_BASE_URL } from "../config";
 
@@ -44,6 +45,7 @@ export default function AnalyticsDashboard() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeModel, setActiveModel] = useState<ModelName>("cnn");
+  const [isGuest, setIsGuest] = useState(true);
 
   useEffect(() => {
     fetchMetrics();
@@ -51,7 +53,13 @@ export default function AnalyticsDashboard() {
 
   const fetchMetrics = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/metrics`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+      setIsGuest(!token);
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${API_BASE_URL}/api/v1/metrics`, { headers });
       if (res.ok) {
         const json = await res.json();
         setData(json);
@@ -111,6 +119,17 @@ export default function AnalyticsDashboard() {
 
   return (
     <div className="w-full flex flex-col gap-8">
+      {isGuest && (
+        <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-amber-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+          <div className="flex items-center space-x-2">
+            <span className="h-1.5 w-1.5 bg-amber-400 rounded-full animate-ping shrink-0" />
+            <span><strong>Guest Sandbox:</strong> You are viewing global guest statistics. Log in to save and analyze your personal digit corrections permanently.</span>
+          </div>
+          <Link href="/login" className="px-3.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 font-bold font-mono rounded-lg border border-amber-500/20 transition-all text-[10px] uppercase tracking-wider text-center shrink-0">
+            Sign In / Register
+          </Link>
+        </div>
+      )}
       {/* Metric Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1: Total sandbox predictions */}

@@ -16,6 +16,7 @@ interface InferenceResponse extends XAIPredictionData {
   confidence: number;
   all_confidences: number[];
   latency_ms: number;
+  prediction_id?: number;
 }
 
 export interface CanvasRef {
@@ -33,6 +34,9 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
   const [latency, setLatency] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [brushSize, setBrushSize] = useState(16);
+  const [predictionId, setPredictionId] = useState<number | null>(null);
+  const [isCorrecting, setIsCorrecting] = useState(false);
+  const [submittingCorrect, setSubmittingCorrect] = useState(false);
 
   // Throttled real-time prediction
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -71,6 +75,9 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
     setConfidence(null);
     setConfidences(new Array(10).fill(0));
     setLatency(null);
+    setPredictionId(null);
+    setIsCorrecting(false);
+    setSubmittingCorrect(false);
   };
 
   const prepareForDrawing = () => {
@@ -212,11 +219,17 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
     // Don't predict empty canvas (if it's purely black or unchanged hint)
     if (!hasDrawn) return;
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/predict/canvas`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           image_data: dataUrl,
           source: "canvas",
@@ -233,11 +246,42 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
       setConfidence(data.confidence);
       setConfidences(data.all_confidences);
       setLatency(data.latency_ms);
+      setPredictionId(data.prediction_id || null);
       onPredict(data); // Propagate prediction up
     } catch (err) {
       console.error("Canvas prediction error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFlagCorrection = async (actualVal: number) => {
+    if (!predictionId) return;
+    setSubmittingCorrect(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${API_BASE_URL}/api/v1/metrics/correct`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          prediction_id: predictionId,
+          actual_label: actualVal,
+          is_battle_arena: false
+        })
+      });
+
+      if (response.ok) {
+        setIsCorrecting(false);
+        setPrediction(actualVal);
+      }
+    } catch (err) {
+      console.error("Error flagging correction:", err);
+    } finally {
+      setSubmittingCorrect(false);
     }
   };
 
@@ -308,19 +352,55 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
         </div>
 
         {/* Main Prediction Display */}
-        <div className="flex items-center space-x-6 mb-6">
-          <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-violet-500/10 flex items-center justify-center border border-white/10 relative">
-            <span className="text-5xl font-black text-white tracking-tighter">
-              {prediction !== null ? prediction : "-"}
-            </span>
-          </div>
-          <div>
-            <div className="text-xs text-slate-400">Class Confidence</div>
-            <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
-              {confidence !== null ? `${(confidence * 100).toFixed(1)}%` : "0.0%"}
+        <div className="flex items-center justify-between mb-6 gap-2">
+          <div className="flex items-center space-x-6">
+            <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-violet-500/10 flex items-center justify-center border border-white/10 relative">
+              <span className="text-5xl font-black text-white tracking-tighter">
+                {prediction !== null ? prediction : "-"}
+              </span>
+            </div>
+            <div>
+              <div className="text-xs text-slate-400">Class Confidence</div>
+              <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
+                {confidence !== null ? `${(confidence * 100).toFixed(1)}%` : "0.0%"}
+              </div>
             </div>
           </div>
+          
+          {prediction !== null && predictionId && !isCorrecting && (
+            <button
+              onClick={() => setIsCorrecting(true)}
+              className="px-2.5 py-1.5 text-[9px] font-mono font-bold uppercase rounded-lg border border-rose-500/20 bg-rose-500/5 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-all cursor-pointer"
+            >
+              Correct Digit
+            </button>
+          )}
         </div>
+
+        {/* Dynamic Correction Grid */}
+        {isCorrecting && (
+          <div className="border-t border-white/5 pt-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-200">
+            <span className="text-[10px] text-slate-500 uppercase font-mono block mb-2">Identify actual digit:</span>
+            <div className="grid grid-cols-5 gap-1.5 mb-3">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleFlagCorrection(i)}
+                  disabled={submittingCorrect}
+                  className="py-1.5 text-xs font-mono font-bold rounded bg-slate-950/80 border border-white/5 text-slate-400 hover:text-white hover:border-emerald-500/30 transition-colors cursor-pointer"
+                >
+                  {i}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setIsCorrecting(false)}
+              className="w-full text-center py-1 text-[9px] font-mono text-slate-500 hover:text-slate-400 cursor-pointer"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
 
         {/* 10-Class Confidence Progress Bars */}
         <div className="space-y-2">

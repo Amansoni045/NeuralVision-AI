@@ -139,9 +139,14 @@ export default function BattleArena() {
     if (!hasDrawn) return;
 
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
       const response = await fetch(`${API_BASE_URL}/api/v1/predict/battle`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           image_data: dataUrl,
           source: "canvas",

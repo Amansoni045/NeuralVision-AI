@@ -157,10 +157,16 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
     // Grab compressed base64 JPEG to significantly reduce network payload size
     const dataUrl = canvas.toDataURL("image/jpeg", 0.45);
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/predict/canvas`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           image_data: dataUrl,
           source: "webcam",
@@ -210,9 +216,14 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
 
       // Trigger prediction for uploaded image
       try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
         const response = await fetch(`${API_BASE_URL}/api/v1/predict/canvas`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             image_data: dataUrl,
             source: "upload",

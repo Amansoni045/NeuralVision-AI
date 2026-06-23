@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Activity, Menu, X, LogIn, LogOut, LayoutDashboard } from "lucide-react";
+import { API_BASE_URL } from "@/config";
 
 export default function Navbar() {
   const router = useRouter();
@@ -12,7 +13,27 @@ export default function Navbar() {
 
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
-    setToken(savedToken);
+    if (savedToken) {
+      fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+        headers: {
+          "Authorization": `Bearer ${savedToken}`
+        }
+      })
+      .then(res => {
+        if (res.ok) {
+          setToken(savedToken);
+        } else {
+          localStorage.removeItem("token");
+          setToken(null);
+        }
+      })
+      .catch(() => {
+        // Safe fallback: assume token is valid during network outage, or clear on auth error
+        setToken(savedToken);
+      });
+    } else {
+      setToken(null);
+    }
   }, []);
 
   const handleLogout = () => {

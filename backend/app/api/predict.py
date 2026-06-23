@@ -3,9 +3,12 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form
 from typing import Optional
 from sqlalchemy.orm import Session
 import numpy as np
+from fastapi.security import OAuth2PasswordBearer
+from jose import jwt, JWTError
 
 from backend.app.core.database import get_db
-from backend.app.api.auth import get_current_user
+from backend.app.core.security import ALGORITHM
+from backend.app.core.config import settings
 from backend.app.db.models import User, PredictionHistory, BattleArenaLog
 from backend.app.models.prediction_service import prediction_service
 from backend.app.models.gradcam import generate_gradcam_base64, get_activation_maps
@@ -13,14 +16,27 @@ from backend.app.schemas.predict import PredictRequest, PredictResponse, BattleA
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
 
-def get_optional_user(db: Session = Depends(get_db), current_user_or_none = Depends(get_current_user)) -> Optional[User]:
-    # Custom helper to return current user if authenticated, else None
-    return current_user_or_none
+# OAuth2 scheme with auto_error=False, so requests without token do not crash with 401
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login-form", auto_error=False)
+
+def get_optional_user(db: Session = Depends(get_db), token: Optional[str] = Depends(oauth2_scheme_optional)) -> Optional[User]:
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+        user = db.query(User).filter(User.email == email).first()
+        return user
+    except JWTError:
+        return None
 
 @router.post("", response_model=PredictResponse)
 def predict_digit(
     payload: PredictRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user)
 ):
     # Preprocess image
     preprocessed_img = prediction_service.preprocess_image(payload.image_data)
@@ -46,6 +62,7 @@ def predict_digit(
     db_history = None
     try:
         db_history = PredictionHistory(
+            user_id=current_user.id if current_user else None,
             image_data=payload.image_data,
             model_type=payload.model_type,
             predicted_label=res["predicted_class"],
@@ -76,17 +93,19 @@ def predict_digit(
 @router.post("/canvas", response_model=PredictResponse)
 def predict_canvas(
     payload: PredictRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user)
 ):
     # Specialized endpoint for canvas
     payload.source = "canvas"
-    return predict_digit(payload, db)
+    return predict_digit(payload, db, current_user)
 
 @router.post("/image", response_model=PredictResponse)
 def predict_image(
     file: UploadFile = File(...),
     model_type: str = Form("cnn"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user)
 ):
     # Read uploaded file
     file_bytes = file.file.read()
@@ -98,12 +117,13 @@ def predict_image(
         source="upload",
         model_type=model_type
     )
-    return predict_digit(payload, db)
+    return predict_digit(payload, db, current_user)
 
 @router.post("/battle", response_model=BattleArenaResponse)
 def predict_battle(
     payload: PredictRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user)
 ):
     # Preprocess image
     preprocessed_img = prediction_service.preprocess_image(payload.image_data)
@@ -124,6 +144,7 @@ def predict_battle(
     db_log = None
     try:
         db_log = BattleArenaLog(
+            user_id=current_user.id if current_user else None,
             image_data=payload.image_data,
             perceptron_predicted=percep_res["predicted_class"],
             perceptron_confidence=percep_res["confidence"],

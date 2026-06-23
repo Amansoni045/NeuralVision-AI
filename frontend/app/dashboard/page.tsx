@@ -30,6 +30,7 @@ import XAIModule from "@/components/XAIModule";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import ErrorExplorer from "@/components/ErrorExplorer";
 import type { XAIPredictionData } from "@/components/XAIModule";
+import { API_BASE_URL } from "@/config";
 
 function DashboardContent() {
   const router = useRouter();
@@ -52,7 +53,26 @@ function DashboardContent() {
   // Authentication check (non-blocking)
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
-    setToken(savedToken);
+    if (savedToken) {
+      fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+        headers: {
+          "Authorization": `Bearer ${savedToken}`
+        }
+      })
+      .then(res => {
+        if (res.ok) {
+          setToken(savedToken);
+        } else {
+          localStorage.removeItem("token");
+          setToken(null);
+        }
+      })
+      .catch(() => {
+        setToken(savedToken);
+      });
+    } else {
+      setToken(null);
+    }
   }, []);
 
   // Force CNN model when advanced/developer mode is disabled
@@ -123,7 +143,7 @@ function DashboardContent() {
     }, 500);
   };
 
-  const showGatedLock = !token && (activeTab === "analytics" || activeTab === "errors");
+  const showGatedLock = false;
 
   return (
     <div className="min-h-screen bg-background flex text-slate-100 font-sans relative overflow-x-hidden">
