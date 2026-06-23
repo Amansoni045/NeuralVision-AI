@@ -33,6 +33,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isMirrored, setIsMirrored] = useState(true); // Default mirrored for selfie cameras
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
 
   // Refs to avoid stale closures in requestAnimationFrame loop
   const isMirroredRef = useRef(isMirrored);
@@ -55,13 +56,17 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
   const hiddenCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Toggle Webcam
-  const startCamera = async () => {
+  const startCamera = async (currentMode: "user" | "environment" = facingMode) => {
+    // If there is an active stream, stop it first to release the hardware
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
           width: { ideal: 1280 }, 
           height: { ideal: 720 }, 
-          facingMode: "user" 
+          facingMode: currentMode 
         }
       });
       streamRef.current = stream;
@@ -74,6 +79,16 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
     } catch (err) {
       console.error("Error accessing camera: ", err);
       alert("Could not access camera. Please verify permissions or check if another app is using it.");
+    }
+  };
+
+  const toggleCameraFacing = () => {
+    const newMode = facingMode === "user" ? "environment" : "user";
+    setFacingMode(newMode);
+    // Autoflip mirroring: front camera (selfie) -> mirrored preview; back camera (environment) -> unmirrored preview
+    setIsMirrored(newMode === "user");
+    if (cameraActive) {
+      startCamera(newMode);
     }
   };
 
@@ -132,13 +147,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
     const sx = (videoWidth - size) / 2;
     const sy = (videoHeight - size) / 2;
 
-    if (isMirroredRef.current) {
-      // Mirror the context so the drawn image is also flipped (matches screen)
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-    }
-
-    // Draw the cropped central region of the video frame onto the hidden canvas
+    // Draw the cropped central region of the video frame onto the hidden canvas (always unmirrored for the AI)
     ctx.drawImage(
       video,
       sx,
@@ -344,17 +353,26 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
               )}
             </div>
  
-            {/* Controls */}
             <div className="flex flex-wrap justify-center items-center gap-3 mt-4">
               {cameraActive && (
-                <button
-                  onClick={() => setIsMirrored(prev => !prev)}
-                  className="flex items-center space-x-2 px-3.5 py-2.5 bg-slate-900 border border-white/10 hover:border-cyan-500/30 rounded-xl transition-all cursor-pointer text-xs font-medium text-slate-300 hover:text-white"
-                  title="Toggle mirroring. Mirror is best for user-facing selfie cameras; unmirror is best if showing digits via rear camera."
-                >
-                  <RefreshCw className="h-3 w-3 text-cyan-400" />
-                  <span>{isMirrored ? "Unmirror" : "Mirror"}</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => setIsMirrored(prev => !prev)}
+                    className="flex items-center space-x-2 px-3.5 py-2.5 bg-slate-900 border border-white/10 hover:border-cyan-500/30 rounded-xl transition-all cursor-pointer text-xs font-medium text-slate-300 hover:text-white"
+                    title="Toggle mirroring. Mirror is best for user-facing selfie cameras; unmirror is best if showing digits via rear camera."
+                  >
+                    <RefreshCw className="h-3 w-3 text-cyan-400" />
+                    <span>{isMirrored ? "Unmirror" : "Mirror"}</span>
+                  </button>
+                  <button
+                    onClick={toggleCameraFacing}
+                    className="flex items-center space-x-2 px-3.5 py-2.5 bg-slate-900 border border-white/10 hover:border-cyan-500/30 rounded-xl transition-all cursor-pointer text-xs font-medium text-slate-300 hover:text-white"
+                    title="Switch between front and back camera (on phones and tablets)."
+                  >
+                    <Camera className="h-3.5 w-3.5 text-cyan-400" />
+                    <span>Flip Camera</span>
+                  </button>
+                </>
               )}
               {cameraActive ? (
                 <button
@@ -366,7 +384,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
                 </button>
               ) : (
                 <button
-                  onClick={startCamera}
+                  onClick={() => startCamera(facingMode)}
                   className="flex items-center space-x-2 px-5 py-2.5 btn-cyber rounded-xl text-sm font-medium"
                 >
                   <Camera className="h-4 w-4" />
