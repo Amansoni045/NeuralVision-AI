@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
 import * as THREE from "three";
 
 function ParticleField({ count = 150 }) {
@@ -47,6 +47,14 @@ function ParticleField({ count = 150 }) {
 }
 
 export default function ThreeBackground() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden opacity-40">
       <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>

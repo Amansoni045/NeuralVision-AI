@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { HelpCircle, Eye } from "lucide-react";
+import { HelpCircle, Eye, Play } from "lucide-react";
 
 interface XAIModuleProps {
   predictionData: XAIPredictionData | null;
+  onTriggerDemo?: () => void;
 }
 
 interface ActivationLayer {
@@ -18,7 +19,7 @@ export interface XAIPredictionData {
   activation_maps?: Record<string, ActivationLayer>;
 }
 
-export default function XAIModule({ predictionData }: XAIModuleProps) {
+export default function XAIModule({ predictionData, onTriggerDemo }: XAIModuleProps) {
   const [activeLayer, setActiveLayer] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
 
@@ -38,9 +39,18 @@ export default function XAIModule({ predictionData }: XAIModuleProps) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-white/5 rounded-2xl glass h-96">
         <Eye className="h-10 w-10 text-slate-600 mb-3" />
-        <p className="text-slate-400 text-sm max-w-sm">
+        <p className="text-slate-400 text-sm max-w-sm mb-4">
           Draw a digit or upload an image in the Sandbox to inspect the CNN&apos;s decision-making process.
         </p>
+        {onTriggerDemo && (
+          <button
+            onClick={onTriggerDemo}
+            className="px-5 py-2.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-cyan-500/10 to-violet-500/10 hover:from-cyan-500/20 hover:to-violet-500/20 border border-cyan-500/20 hover:border-cyan-500/40 text-cyan-400 hover:text-white transition-all cursor-pointer flex items-center space-x-2"
+          >
+            <Play className="h-3.5 w-3.5 fill-cyan-400/20" />
+            <span>Watch AI Think (Interactive Demo)</span>
+          </button>
+        )}
       </div>
     );
   }

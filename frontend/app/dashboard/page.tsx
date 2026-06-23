@@ -354,6 +354,7 @@ function DashboardContent() {
                           <select
                             value={selectedModel}
                             onChange={(e) => setSelectedModel(e.target.value)}
+                            aria-label="Select neural network model"
                             className="bg-slate-950 border border-white/10 rounded px-2 py-0.5 text-xs text-cyan-400 outline-none cursor-pointer hover:border-cyan-500/20"
                           >
                             <option value="cnn">CNN (Champion)</option>
@@ -414,7 +415,7 @@ function DashboardContent() {
                       Inspect the convolutional layer activation maps and Grad-CAM visual overlays. See exactly which regions of your digit triggered the CNN prediction.
                     </p>
                   </div>
-                  <XAIModule predictionData={latestPrediction} />
+                  <XAIModule predictionData={latestPrediction} onTriggerDemo={triggerDemo} />
                 </div>
               )}
 

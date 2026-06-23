@@ -100,6 +100,7 @@ export default function ErrorExplorer() {
             <select
               value={modelFilter}
               onChange={(e) => setModelFilter(e.target.value)}
+              aria-label="Filter by model type"
               className="bg-slate-950/80 border border-white/5 rounded-lg px-3 py-1.5 text-xs text-slate-300 outline-none cursor-pointer hover:border-cyan-500/20"
             >
               <option value="all">All Models</option>
@@ -115,6 +116,7 @@ export default function ErrorExplorer() {
             <select
               value={predictedFilter}
               onChange={(e) => setPredictedFilter(e.target.value)}
+              aria-label="Filter by predicted label"
               className="bg-slate-950/80 border border-white/5 rounded-lg px-3 py-1.5 text-xs text-slate-300 outline-none cursor-pointer hover:border-cyan-500/20"
             >
               <option value="all">Any Predicted</option>
@@ -130,6 +132,7 @@ export default function ErrorExplorer() {
             <select
               value={actualFilter}
               onChange={(e) => setActualFilter(e.target.value)}
+              aria-label="Filter by correct label"
               className="bg-slate-950/80 border border-white/5 rounded-lg px-3 py-1.5 text-xs text-slate-300 outline-none cursor-pointer hover:border-cyan-500/20"
             >
               <option value="all">Any Actual</option>
