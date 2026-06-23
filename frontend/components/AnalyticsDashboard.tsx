@@ -195,9 +195,9 @@ export default function AnalyticsDashboard() {
           <div className="flex flex-col items-center w-full">
             {/* The Matrix Grid scroll wrapper for small viewports */}
             <div className="w-full overflow-x-auto pb-2 flex justify-start sm:justify-center">
-              <div className="grid grid-cols-11 gap-1 min-w-[320px] max-w-sm mb-6 px-1">
+              <div className="grid grid-cols-11 gap-1 w-full max-w-sm mb-6 px-1">
                 {/* Header Label Column placeholder */}
-                <div className="text-center font-mono text-[9px] text-slate-600 flex items-center justify-center font-bold">Act\Pred</div>
+                <div className="text-center font-mono text-[9px] text-slate-600 flex items-center justify-center font-bold">A/P</div>
                 {/* Column labels */}
                 {Array.from({ length: 10 }).map((_, colIdx) => (
                   <div key={colIdx} className="text-center font-mono text-xs text-slate-400 flex items-center justify-center font-bold">

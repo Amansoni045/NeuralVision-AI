@@ -143,23 +143,36 @@ Ensure you have [Docker](https://www.docker.com/) and [Docker Compose](https://d
 ### 1. Launch with Docker Compose
 To build and start the entire stack (PostgreSQL, MLflow, FastAPI backend, Next.js frontend):
 ```bash
+# First-time build or when modifying dependency configurations
 docker compose up --build
+
+# Subsequent fast launches (rebuilds only modified code in seconds, reuses package caches)
+docker compose up
 ```
-Once the containers are healthy:
+
+Once the containers are active:
 - **Frontend App**: `http://localhost:3000`
 - **FastAPI API Server**: `http://localhost:8000`
 - **Swagger API Docs**: `http://localhost:8000/docs`
-- **MLflow Dashboard**: `http://localhost:5000`
+- **MLflow Dashboard**: `http://localhost:5005`
+
+> [!NOTE]
+> **macOS Port Conflict**: MLflow is exposed on host port `5005` because macOS Monterey and newer binds its native **AirPlay Receiver** to port `5000` by default. Internally within the Docker network, backend containers still connect via port `5000`.
+
+> [!TIP]
+> **Hot Reloading**: The backend uses volume mounts. Any local changes made to python files under the `backend/` folder are instantly updated in the container in real-time without needing a container rebuild or restart.
 
 ### 2. Manual Development Setup
 
-If running components natively without Docker:
+If running components natively without Docker (SQLite fallback mode):
 
 #### Backend Setup:
+Ensure you are using Python 3.10 or 3.11 (TensorFlow has compatibility issues on Python 3.12+ for macOS):
 ```bash
 cd backend
 python3 -m venv venv
 source venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```

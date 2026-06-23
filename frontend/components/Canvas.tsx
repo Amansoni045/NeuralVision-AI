@@ -264,7 +264,7 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
             onTouchStart={startDrawing}
             onTouchMove={draw}
             onTouchEnd={stopDrawing}
-            className="rounded-xl cursor-crosshair bg-black touch-none max-w-full h-auto aspect-square"
+            className="rounded-xl cursor-crosshair bg-black touch-none max-w-full h-auto aspect-square select-none"
           />
         </div>
 
@@ -285,7 +285,7 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
 
           <button
             onClick={clearCanvas}
-            className="flex items-center space-x-1.5 px-3.5 py-1.5 text-xs text-slate-300 hover:text-rose-400 border border-slate-700/50 hover:border-rose-500/20 rounded-lg transition-all cursor-pointer bg-slate-900/50"
+            className="flex items-center space-x-1.5 px-3.5 py-2 text-xs text-slate-300 hover:text-rose-400 border border-slate-700/50 hover:border-rose-500/20 rounded-lg transition-all cursor-pointer bg-slate-900/50"
           >
             <Trash2 className="h-3.5 w-3.5" />
             <span>Clear</span>
@@ -294,7 +294,7 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
       </div>
 
       {/* Real-time confidence distribution bars */}
-      <div className="flex flex-col w-full max-w-sm glass p-6 rounded-2xl border border-white/5 relative overflow-hidden">
+      <div className="flex flex-col w-full max-w-sm glass p-4 sm:p-6 rounded-2xl border border-white/5 relative overflow-hidden">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-2">
             <BrainCircuit className="h-5 w-5 text-cyan-400" />

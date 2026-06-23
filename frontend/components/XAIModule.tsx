@@ -59,7 +59,7 @@ export default function XAIModule({ predictionData }: XAIModuleProps) {
       {/* Upper Grid: Grad-CAM explanation */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
         {/* Card 1: What is Grad-CAM */}
-        <div className="glass p-6 rounded-2xl border border-white/5 flex flex-col justify-between">
+        <div className="glass p-4 sm:p-6 rounded-2xl border border-white/5 flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-semibold tracking-wide text-white uppercase mb-4 flex items-center space-x-2">
               <Eye className="h-5 w-5 text-cyan-400" />
@@ -94,7 +94,7 @@ export default function XAIModule({ predictionData }: XAIModuleProps) {
         </div>
 
         {/* Card 2: Visual Comparison */}
-        <div className="glass p-6 rounded-2xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
+        <div className="glass p-4 sm:p-6 rounded-2xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
           <div className="text-center mb-4 max-w-xs">
             <span className="text-[10px] text-emerald-400 bg-emerald-950/30 border border-emerald-500/20 px-2.5 py-1 rounded-full font-sans inline-block mb-2 font-medium">
               Human-readable Visual Audit
@@ -140,7 +140,7 @@ export default function XAIModule({ predictionData }: XAIModuleProps) {
 
       {/* Intermediate activations */}
       {activation_maps && layerNames.length > 0 && (
-        <div className="glass p-6 rounded-2xl border border-white/5 w-full">
+        <div className="glass p-4 sm:p-6 rounded-2xl border border-white/5 w-full">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>
               <h3 className="text-sm font-semibold tracking-wide text-white uppercase flex items-center space-x-2">
@@ -159,7 +159,7 @@ export default function XAIModule({ predictionData }: XAIModuleProps) {
                     setActiveLayer(name);
                     setSelectedFilter(null);
                   }}
-                  className={`px-3 py-1.5 text-xs font-mono rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-2.5 sm:py-1.5 text-xs font-mono rounded-lg transition-all cursor-pointer ${
                     activeLayer === name
                       ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
                       : "text-slate-400 hover:text-white"

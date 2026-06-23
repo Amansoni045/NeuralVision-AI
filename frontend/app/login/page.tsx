@@ -64,7 +64,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-background px-4 py-12 overflow-hidden select-none">
+    <div className="relative min-h-screen flex items-center justify-center bg-background px-4 py-12 overflow-hidden">
       {/* Background Gradients & Grid */}
       <div className="absolute inset-0 bg-grid pointer-events-none z-0" />
       <div className="absolute -top-40 -left-40 h-[500px] w-[500px] bg-violet-500/10 rounded-full filter blur-3xl" />

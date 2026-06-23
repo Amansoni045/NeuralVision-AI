@@ -126,7 +126,7 @@ function DashboardContent() {
   const showGatedLock = !token && (activeTab === "analytics" || activeTab === "errors");
 
   return (
-    <div className="min-h-screen bg-background flex text-slate-100 font-sans select-none relative overflow-x-hidden">
+    <div className="min-h-screen bg-background flex text-slate-100 font-sans relative overflow-x-hidden">
       {/* Mobile Sidebar Overlay Backdrop */}
       {sidebarOpen && (
         <div 
@@ -170,7 +170,7 @@ function DashboardContent() {
             
             <button
               onClick={() => setActiveTab("sandbox")}
-              className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-xl transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium rounded-xl transition-all cursor-pointer ${
                 activeTab === "sandbox" ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "text-slate-400 hover:text-white"
               }`}
             >
@@ -183,7 +183,7 @@ function DashboardContent() {
 
             <button
               onClick={() => setActiveTab("battle")}
-              className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-xl transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium rounded-xl transition-all cursor-pointer ${
                 activeTab === "battle" ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "text-slate-400 hover:text-white"
               }`}
             >
@@ -196,7 +196,7 @@ function DashboardContent() {
 
             <button
               onClick={() => setActiveTab("xai")}
-              className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-xl transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium rounded-xl transition-all cursor-pointer ${
                 activeTab === "xai" ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "text-slate-400 hover:text-white"
               }`}
             >
@@ -211,7 +211,7 @@ function DashboardContent() {
 
             <button
               onClick={() => setActiveTab("analytics")}
-              className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-xl transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium rounded-xl transition-all cursor-pointer ${
                 activeTab === "analytics" ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "text-slate-400 hover:text-white"
               }`}
             >
@@ -224,7 +224,7 @@ function DashboardContent() {
 
             <button
               onClick={() => setActiveTab("errors")}
-              className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-xl transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium rounded-xl transition-all cursor-pointer ${
                 activeTab === "errors" ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "text-slate-400 hover:text-white"
               }`}
             >
@@ -299,7 +299,7 @@ function DashboardContent() {
             {/* Advanced Insights Toggle */}
             <button
               onClick={() => setShowAdvanced(prev => !prev)}
-              className={`px-2 py-1 text-[9px] xs:text-[10px] font-mono rounded-lg border transition-all cursor-pointer ${
+              className={`px-3 py-1.5 text-[9px] xs:text-[10px] font-mono rounded-lg border transition-all cursor-pointer ${
                 showAdvanced 
                   ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.1)]" 
                   : "bg-slate-950/40 text-slate-500 border-white/5 hover:text-slate-300"
@@ -307,38 +307,6 @@ function DashboardContent() {
             >
               {showAdvanced ? "Hide Dev Controls" : "Show Dev Controls"}
             </button>
-
-            {/* Dynamic control for sandbox active model selector */}
-            {activeTab === "sandbox" && showAdvanced && (
-              <div className="flex items-center space-x-3 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-white/5 relative">
-                <span className="text-[10px] text-slate-500 font-mono uppercase">Neural Model:</span>
-                <select
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="bg-slate-950 border border-white/10 rounded px-2 py-0.5 text-xs text-cyan-400 outline-none cursor-pointer hover:border-cyan-500/20"
-                >
-                  <option value="cnn">CNN (Champion)</option>
-                  <option value="ann">ANN (Dense)</option>
-                  <option value="perceptron">Perceptron</option>
-                </select>
-                
-                <div
-                  onMouseEnter={() => setHoveredTerm(selectedModel)}
-                  onMouseLeave={() => setHoveredTerm(null)}
-                  className="cursor-help text-slate-400 hover:text-white"
-                >
-                  <HelpCircle className="h-3.5 w-3.5" />
-                </div>
-
-                {hoveredTerm && (
-                  <div className="absolute right-0 top-10 w-64 bg-slate-950/95 border border-white/10 p-3 rounded-xl shadow-2xl z-50 text-[11px] text-slate-300 leading-normal font-sans">
-                    {selectedModel === "cnn" && "CNN (Convolutional Neural Network): Scans the canvas segments. Excels at extracting shape curves and diagonals."}
-                    {selectedModel === "ann" && "ANN (Dense): Flat layer representation. Looks at pixels individually without spatial connections."}
-                    {selectedModel === "perceptron" && "Perceptron: Simplest structure. Runs a simple linear decision boundary."}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </header>
 
@@ -365,29 +333,62 @@ function DashboardContent() {
             <>
               {activeTab === "sandbox" && (
                 <div className="space-y-12">
-                  <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-white/5 pb-4 gap-4">
                     <div>
                       <h3 className="text-xl font-bold tracking-tight text-white">Digit Input Workspace</h3>
                       <p className="text-xs text-slate-400">
                         Draw a digit inside the box. Visual explanations (XAI) will compute automatically when you release.
                       </p>
                     </div>
-                    {isDemoRunning && (
-                      <div className="flex items-center space-x-2 px-3 py-1 bg-cyan-950/30 border border-cyan-500/20 rounded-full text-[10px] text-cyan-400 font-mono">
-                        <span className="h-1.5 w-1.5 bg-cyan-400 rounded-full animate-ping" />
-                        <span>Autoplaying Demo...</span>
-                      </div>
-                    )}
+                    <div className="flex flex-wrap items-center gap-3">
+                      {isDemoRunning && (
+                        <div className="flex items-center space-x-2 px-3 py-1 bg-cyan-950/30 border border-cyan-500/20 rounded-full text-[10px] text-cyan-400 font-mono">
+                          <span className="h-1.5 w-1.5 bg-cyan-400 rounded-full animate-ping" />
+                          <span>Autoplaying Demo...</span>
+                        </div>
+                      )}
+                      
+                      {showAdvanced && (
+                        <div className="flex items-center space-x-3 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-white/5 relative">
+                          <span className="text-[10px] text-slate-500 font-mono uppercase">Neural Model:</span>
+                          <select
+                            value={selectedModel}
+                            onChange={(e) => setSelectedModel(e.target.value)}
+                            className="bg-slate-950 border border-white/10 rounded px-2 py-0.5 text-xs text-cyan-400 outline-none cursor-pointer hover:border-cyan-500/20"
+                          >
+                            <option value="cnn">CNN (Champion)</option>
+                            <option value="ann">ANN (Dense)</option>
+                            <option value="perceptron">Perceptron</option>
+                          </select>
+                          
+                          <div
+                            onMouseEnter={() => setHoveredTerm(selectedModel)}
+                            onMouseLeave={() => setHoveredTerm(null)}
+                            className="cursor-help text-slate-400 hover:text-white"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5" />
+                          </div>
+
+                          {hoveredTerm && (
+                            <div className="absolute right-0 top-10 w-64 bg-slate-950/95 border border-white/10 p-3 rounded-xl shadow-2xl z-50 text-[11px] text-slate-300 leading-normal font-sans select-text">
+                              {selectedModel === "cnn" && "CNN (Convolutional Neural Network): Scans the canvas segments. Excels at extracting shape curves and diagonals."}
+                              {selectedModel === "ann" && "ANN (Dense): Flat layer representation. Looks at pixels individually without spatial connections."}
+                              {selectedModel === "perceptron" && "Perceptron: Simplest structure. Runs a simple linear decision boundary."}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* View 1: Canvas Drawing */}
-                  <div className="glass p-4 sm:p-8 rounded-3xl border border-white/5 relative overflow-hidden">
+                  <div className="glass p-3.5 sm:p-6 lg:p-8 rounded-3xl border border-white/5 relative overflow-hidden">
                     <div className="absolute top-0 right-0 h-40 w-40 bg-cyan-500/5 rounded-bl-full filter blur-2xl pointer-events-none" />
                     <Canvas ref={canvasRef} onPredict={handlePredictionCallback} selectedModel={selectedModel} />
                   </div>
 
                   {/* View 2: Webcam & File Upload */}
-                  <div className="glass p-4 sm:p-8 rounded-3xl border border-white/5">
+                  <div className="glass p-3.5 sm:p-6 lg:p-8 rounded-3xl border border-white/5">
                     <WebcamPredict onPredict={handlePredictionCallback} selectedModel={selectedModel} />
                   </div>
                 </div>

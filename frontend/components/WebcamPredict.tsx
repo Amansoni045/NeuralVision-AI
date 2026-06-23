@@ -247,7 +247,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
               stopCamera();
               setActiveTab("upload");
             }}
-            className={`flex-1 flex items-center justify-center space-x-2 py-2 text-sm rounded-lg transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center space-x-2 py-2.5 text-sm rounded-lg transition-all cursor-pointer ${
               activeTab === "upload" ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "text-slate-400 hover:text-white"
             }`}
           >
@@ -256,7 +256,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
           </button>
           <button
             onClick={() => setActiveTab("webcam")}
-            className={`flex-1 flex items-center justify-center space-x-2 py-2 text-sm rounded-lg transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center space-x-2 py-2.5 text-sm rounded-lg transition-all cursor-pointer ${
               activeTab === "webcam" ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "text-slate-400 hover:text-white"
             }`}
           >
@@ -338,7 +338,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
               {cameraActive && (
                 <button
                   onClick={() => setIsMirrored(prev => !prev)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-slate-900 border border-white/10 hover:border-cyan-500/30 rounded-xl transition-all cursor-pointer text-xs font-medium text-slate-300 hover:text-white"
+                  className="flex items-center space-x-2 px-3.5 py-2.5 bg-slate-900 border border-white/10 hover:border-cyan-500/30 rounded-xl transition-all cursor-pointer text-xs font-medium text-slate-300 hover:text-white"
                   title="Toggle mirroring. Mirror is best for user-facing selfie cameras; unmirror is best if showing digits via rear camera."
                 >
                   <RefreshCw className="h-3 w-3 text-cyan-400" />
@@ -348,7 +348,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
               {cameraActive ? (
                 <button
                   onClick={stopCamera}
-                  className="flex items-center space-x-2 px-5 py-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 rounded-xl transition-all cursor-pointer text-sm font-medium"
+                  className="flex items-center space-x-2 px-5 py-2.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 rounded-xl transition-all cursor-pointer text-sm font-medium"
                 >
                   <StopCircle className="h-4 w-4" />
                   <span>Stop Stream</span>
@@ -356,7 +356,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
               ) : (
                 <button
                   onClick={startCamera}
-                  className="flex items-center space-x-2 px-5 py-2 btn-cyber rounded-xl text-sm font-medium"
+                  className="flex items-center space-x-2 px-5 py-2.5 btn-cyber rounded-xl text-sm font-medium"
                 >
                   <Camera className="h-4 w-4" />
                   <span>Start Live Stream</span>
