@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Trash2, Cpu, Gauge, Layers } from "lucide-react";
+import { Trash2, Cpu, Gauge, Layers, Loader2, AlertCircle } from "lucide-react";
 import { API_BASE_URL } from "../config";
 import { useBackend } from "./BackendStatusProvider";
 
@@ -32,6 +32,8 @@ export default function BattleArena() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(16);
   const [results, setResults] = useState<BattleResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
 
   // Load model structures on mount/reconnect
@@ -141,7 +143,8 @@ export default function BattleArena() {
       }
     }
     if (!hasDrawn) return;
-
+    setLoading(true);
+    setError(null);
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
       const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -164,6 +167,9 @@ export default function BattleArena() {
       setResults(data);
     } catch (err) {
       console.error("Battle prediction failed:", err);
+      setError("Unable to run battle prediction. Please check your network.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -267,6 +273,19 @@ export default function BattleArena() {
 
       {/* Battle Cards */}
       <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-3 gap-6">
+        {error && (
+          <div className="md:col-span-3 flex items-center space-x-2.5 p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs mb-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{error}</span>
+            <button
+              onClick={() => triggerBattlePrediction()}
+              className="ml-auto underline font-bold cursor-pointer"
+            >
+              Retry Battle
+            </button>
+          </div>
+        )}
+
         {/* Model 1: Perceptron */}
         <div className="glass p-6 rounded-2xl border border-white/5 flex flex-col justify-between relative overflow-hidden">
           <div className="absolute top-0 right-0 h-24 w-24 bg-cyan-500/5 rounded-bl-full filter blur-xl" />
@@ -282,7 +301,14 @@ export default function BattleArena() {
             </div>
 
             <div className="h-28 flex items-center justify-center bg-slate-950/60 rounded-xl border border-white/5 mb-4">
-              {results ? (
+              {loading ? (
+                <div className="text-center">
+                  <Loader2 className="h-6 w-6 text-cyan-400 animate-spin mx-auto mb-1.5" />
+                  <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono animate-pulse">Calculating</span>
+                </div>
+              ) : error ? (
+                <AlertCircle className="h-5 w-5 text-rose-500/60" />
+              ) : results ? (
                 <div className="text-center">
                   <div className="text-5xl font-black text-white">{results.perceptron.predicted_class}</div>
                   <div className="text-xs text-cyan-400 mt-1 font-semibold">
@@ -300,8 +326,8 @@ export default function BattleArena() {
                   <Gauge className="h-3.5 w-3.5 text-slate-500" />
                   Latency:
                 </span>
-                <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${results ? getLatencyBadge(results.perceptron.latency_ms) : 'text-slate-500'}`}>
-                  {results ? `${results.perceptron.latency_ms.toFixed(1)} ms` : "-"}
+                <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${results && !loading ? getLatencyBadge(results.perceptron.latency_ms) : 'text-slate-500'}`}>
+                  {results && !loading ? `${results.perceptron.latency_ms.toFixed(1)} ms` : "-"}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
@@ -335,7 +361,14 @@ export default function BattleArena() {
             </div>
 
             <div className="h-28 flex items-center justify-center bg-slate-950/60 rounded-xl border border-white/5 mb-4">
-              {results ? (
+              {loading ? (
+                <div className="text-center">
+                  <Loader2 className="h-6 w-6 text-violet-400 animate-spin mx-auto mb-1.5" />
+                  <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono animate-pulse">Calculating</span>
+                </div>
+              ) : error ? (
+                <AlertCircle className="h-5 w-5 text-rose-500/60" />
+              ) : results ? (
                 <div className="text-center">
                   <div className="text-5xl font-black text-white">{results.ann.predicted_class}</div>
                   <div className="text-xs text-cyan-400 mt-1 font-semibold">
@@ -353,8 +386,8 @@ export default function BattleArena() {
                   <Gauge className="h-3.5 w-3.5 text-slate-500" />
                   Latency:
                 </span>
-                <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${results ? getLatencyBadge(results.ann.latency_ms) : 'text-slate-500'}`}>
-                  {results ? `${results.ann.latency_ms.toFixed(1)} ms` : "-"}
+                <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${results && !loading ? getLatencyBadge(results.ann.latency_ms) : 'text-slate-500'}`}>
+                  {results && !loading ? `${results.ann.latency_ms.toFixed(1)} ms` : "-"}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
@@ -388,7 +421,14 @@ export default function BattleArena() {
             </div>
 
             <div className="h-28 flex items-center justify-center bg-cyan-950/10 rounded-xl border border-cyan-500/10 mb-4 shadow-[inset_0_0_12px_rgba(6,182,212,0.05)]">
-              {results ? (
+              {loading ? (
+                <div className="text-center">
+                  <Loader2 className="h-6 w-6 text-cyan-400 animate-spin mx-auto mb-1.5" />
+                  <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono animate-pulse">Calculating</span>
+                </div>
+              ) : error ? (
+                <AlertCircle className="h-5 w-5 text-rose-500/60" />
+              ) : results ? (
                 <div className="text-center">
                   <div className="text-5xl font-black text-white">{results.cnn.predicted_class}</div>
                   <div className="text-xs text-cyan-400 mt-1 font-semibold">
@@ -406,8 +446,8 @@ export default function BattleArena() {
                   <Gauge className="h-3.5 w-3.5 text-slate-500" />
                   Latency:
                 </span>
-                <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${results ? getLatencyBadge(results.cnn.latency_ms) : 'text-slate-500'}`}>
-                  {results ? `${results.cnn.latency_ms.toFixed(1)} ms` : "-"}
+                <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${results && !loading ? getLatencyBadge(results.cnn.latency_ms) : 'text-slate-500'}`}>
+                  {results && !loading ? `${results.cnn.latency_ms.toFixed(1)} ms` : "-"}
                 </span>
               </div>
               <div className="flex justify-between text-xs">

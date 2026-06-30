@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, Image as ImageIcon, Video, StopCircle, RefreshCw } from "lucide-react";
+import { Camera, Image as ImageIcon, Video, StopCircle, RefreshCw, Loader2, AlertCircle } from "lucide-react";
 import { API_BASE_URL } from "../config";
 import type { XAIPredictionData } from "./XAIModule";
 import { useBackend } from "./BackendStatusProvider";
@@ -33,6 +33,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
   const [latency, setLatency] = useState<number | null>(null);
   const [preprocessedImg, setPreprocessedImg] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [predictionError, setPredictionError] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isMirrored, setIsMirrored] = useState(true); // Default mirrored for selfie cameras
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
@@ -232,6 +233,8 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
       const dataUrl = reader.result as string;
       setUploadedImage(dataUrl);
 
+      setIsProcessing(true);
+      setPredictionError(null);
       // Trigger prediction for uploaded image
       try {
         const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
@@ -261,6 +264,9 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
         onPredict(data);
       } catch (err) {
         console.error("Uploaded image prediction error:", err);
+        setPredictionError("Network/Server slow or disconnected.");
+      } finally {
+        setIsProcessing(false);
       }
     };
     reader.readAsDataURL(file);
@@ -450,22 +456,40 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
       {/* Results View */}
       <div className="flex flex-col w-full max-w-sm glass p-6 rounded-2xl border border-white/5">
         <h3 className="text-sm font-semibold tracking-wide text-white uppercase mb-6 flex items-center space-x-2">
-          <RefreshCw className={`h-4 w-4 text-cyan-400 ${isProcessing ? 'animate-spin' : ''}`} />
-          <span>Real-Time Output</span>
+          {isProcessing ? (
+            <Loader2 className="h-4 w-4 text-cyan-400 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4 text-cyan-400" />
+          )}
+          <span>{activeTab === "webcam" ? "Real-Time Output" : "Upload Output"}</span>
         </h3>
 
         <div className="flex items-center space-x-6 mb-6">
           <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-violet-500/10 flex items-center justify-center border border-white/10 relative">
-            <span className="text-5xl font-black text-white tracking-tighter">
-              {prediction !== null ? prediction : "-"}
-            </span>
+            {isProcessing ? (
+              <Loader2 className="h-8 w-8 text-cyan-400 animate-spin" />
+            ) : predictionError ? (
+              <AlertCircle className="h-8 w-8 text-rose-400 animate-pulse" />
+            ) : (
+              <span className="text-5xl font-black text-white tracking-tighter">
+                {prediction !== null ? prediction : "-"}
+              </span>
+            )}
           </div>
           <div>
             <div className="text-xs text-slate-400 font-medium">Confidence Score</div>
             <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
-              {confidence !== null ? `${(confidence * 100).toFixed(1)}%` : "0.0%"}
+              {isProcessing ? (
+                <span className="animate-pulse text-cyan-400 text-lg block">Analyzing...</span>
+              ) : predictionError ? (
+                <span className="text-rose-400 text-xs block leading-tight">{predictionError}</span>
+              ) : confidence !== null ? (
+                `${(confidence * 100).toFixed(1)}%`
+              ) : (
+                "0.0%"
+              )}
             </div>
-            {latency && (
+            {latency && !isProcessing && !predictionError && (
               <div className="text-[10px] text-slate-500 font-mono mt-1">
                 Latency: {latency.toFixed(1)} ms
               </div>
@@ -473,7 +497,7 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
           </div>
         </div>
 
-        {preprocessedImg && (
+        {preprocessedImg && !isProcessing && !predictionError && (
           <div className="flex flex-col items-center justify-center p-3 mb-4 bg-slate-950/60 border border-white/5 rounded-xl">
             <span className="text-[9px] uppercase font-mono tracking-widest text-slate-500 mb-2">AI Input View (28x28 MNIST format)</span>
             <img

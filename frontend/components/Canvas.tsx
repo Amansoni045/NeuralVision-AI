@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
-import { Trash2, BrainCircuit } from "lucide-react";
+import { Trash2, BrainCircuit, Loader2, AlertCircle } from "lucide-react";
 import { API_BASE_URL } from "../config";
 import type { XAIPredictionData } from "./XAIModule";
 import { animateDrawing } from "../utils/demoSession";
@@ -35,6 +35,7 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
   const [confidences, setConfidences] = useState<number[]>(new Array(10).fill(0));
   const [latency, setLatency] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [predictionError, setPredictionError] = useState<string | null>(null);
   const [brushSize, setBrushSize] = useState(16);
   const [predictionId, setPredictionId] = useState<number | null>(null);
   const [isCorrecting, setIsCorrecting] = useState(false);
@@ -228,6 +229,7 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
     }
 
     setLoading(true);
+    setPredictionError(null);
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/predict/canvas`, {
         method: "POST",
@@ -252,6 +254,7 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
       onPredict(data); // Propagate prediction up
     } catch (err) {
       console.error("Canvas prediction error:", err);
+      setPredictionError("Network slow or server unreachable. Retrying...");
     } finally {
       setLoading(false);
     }
@@ -385,30 +388,50 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
             <BrainCircuit className="h-5 w-5 text-cyan-400" />
             <h3 className="text-sm font-semibold tracking-wide text-white uppercase">Inference Output</h3>
           </div>
-          {latency && (
+          {loading ? (
+            <span className="text-[10px] bg-cyan-950 text-cyan-400 px-2 py-0.5 rounded font-mono border border-cyan-800/30 animate-pulse">
+              Analyzing...
+            </span>
+          ) : latency ? (
             <span className="text-[10px] bg-cyan-950 text-cyan-400 px-2 py-0.5 rounded font-mono border border-cyan-800/30">
               {latency.toFixed(2)} ms
             </span>
-          )}
+          ) : null}
         </div>
 
         {/* Main Prediction Display */}
         <div className="flex items-center justify-between mb-6 gap-2">
           <div className="flex items-center space-x-6">
             <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-violet-500/10 flex items-center justify-center border border-white/10 relative">
-              <span className="text-5xl font-black text-white tracking-tighter">
-                {prediction !== null ? prediction : "-"}
-              </span>
+              {loading ? (
+                <Loader2 className="h-8 w-8 text-cyan-400 animate-spin" />
+              ) : predictionError ? (
+                <AlertCircle className="h-8 w-8 text-rose-400 animate-pulse" />
+              ) : (
+                <span className="text-5xl font-black text-white tracking-tighter">
+                  {prediction !== null ? prediction : "-"}
+                </span>
+              )}
             </div>
             <div>
-              <div className="text-xs text-slate-400">Class Confidence</div>
+              <div className="text-xs text-slate-400 font-medium">Class Confidence</div>
               <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
-                {confidence !== null ? `${(confidence * 100).toFixed(1)}%` : "0.0%"}
+                {loading ? (
+                  <span className="animate-pulse text-cyan-400 text-lg block">AI is thinking...</span>
+                ) : predictionError ? (
+                  <span className="text-rose-400 text-[10px] font-semibold block leading-tight max-w-[200px]">
+                    Network Slow/Offline
+                  </span>
+                ) : confidence !== null ? (
+                  `${(confidence * 100).toFixed(1)}%`
+                ) : (
+                  "0.0%"
+                )}
               </div>
             </div>
           </div>
           
-          {prediction !== null && predictionId && !isCorrecting && (
+          {prediction !== null && predictionId && !isCorrecting && !loading && (
             <button
               onClick={() => setIsCorrecting(true)}
               className="px-2.5 py-1.5 text-[9px] font-mono font-bold uppercase rounded-lg border border-rose-500/20 bg-rose-500/5 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-all cursor-pointer"
@@ -444,9 +467,23 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
         )}
 
         {/* 10-Class Confidence Progress Bars */}
-        <div className="space-y-2">
+        {predictionError && !loading && (
+          <div className="p-3 rounded-xl border border-rose-500/20 bg-rose-500/5 text-center mb-4">
+            <p className="text-[10px] text-slate-300 mb-2 leading-relaxed">
+              We are having trouble communicating with the AI. If the server is offline or your network is slow, it might take a few moments.
+            </p>
+            <button
+              onClick={() => triggerPrediction(true)}
+              className="w-full py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg transition-all text-[10px] font-semibold cursor-pointer"
+            >
+              Retry Prediction
+            </button>
+          </div>
+        )}
+
+        <div className={`space-y-2 transition-all duration-300 ${loading ? 'opacity-40 pointer-events-none' : ''}`}>
           {confidences.map((conf, index) => {
-            const isPredicted = prediction === index;
+            const isPredicted = prediction === index && !predictionError;
             return (
               <div key={index} className="flex items-center space-x-2.5">
                 <span className={`w-3 text-xs font-mono font-bold ${isPredicted ? 'text-cyan-400' : 'text-slate-500'}`}>
