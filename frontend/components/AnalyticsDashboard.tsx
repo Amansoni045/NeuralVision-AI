@@ -4,6 +4,7 @@ import { useEffect, useState, Fragment } from "react";
 import Link from "next/link";
 import { LineChart, BarChart2, CheckSquare, Zap, Activity } from "lucide-react";
 import { API_BASE_URL } from "../config";
+import { useBackend } from "./BackendStatusProvider";
 
 
 interface HistoryData {
@@ -42,14 +43,17 @@ const MODEL_NAMES = ["perceptron", "ann", "cnn"] as const;
 type ModelName = (typeof MODEL_NAMES)[number];
 
 export default function AnalyticsDashboard() {
+  const { status, elapsedSeconds, checkStatus } = useBackend();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeModel, setActiveModel] = useState<ModelName>("cnn");
   const [isGuest, setIsGuest] = useState(true);
 
   useEffect(() => {
-    fetchMetrics();
-  }, []);
+    if (status === "online") {
+      fetchMetrics();
+    }
+  }, [status]);
 
   const fetchMetrics = async () => {
     try {
@@ -71,11 +75,52 @@ export default function AnalyticsDashboard() {
     }
   };
 
-  if (loading || !data) {
+  if (status === "offline" || status === "sleeping" || status === "checking" || loading || !data) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-white/5 rounded-2xl glass h-96">
-        <Activity className="h-10 w-10 text-slate-600 mb-3 animate-pulse" />
-        <p className="text-slate-400 text-sm">Loading historical runs and dashboard analytics...</p>
+        {status === "checking" && (
+          <>
+            <Activity className="h-10 w-10 text-cyan-400 mb-3 animate-pulse" />
+            <p className="text-slate-300 font-semibold text-sm">Connecting to AI server...</p>
+            <p className="text-slate-500 text-xs mt-1">Retrieving dashboard records...</p>
+          </>
+        )}
+        {status === "sleeping" && (
+          <>
+            <div className="h-10 w-10 rounded-full border-2 border-slate-700 border-t-amber-400 animate-spin mb-3" />
+            <p className="text-amber-400 font-semibold text-sm">AI Server is Waking Up</p>
+            <p className="text-slate-400 text-xs mt-1 max-w-sm">
+              To save energy, our server sleeps when inactive. It is starting up now—this takes about 50 seconds. Analytics will load automatically when ready.
+            </p>
+            <span className="mt-4 text-xs font-mono bg-amber-500/10 text-amber-400 px-3 py-1 rounded-lg border border-amber-500/20">
+              Waking up: {elapsedSeconds}s
+            </span>
+          </>
+        )}
+        {status === "offline" && (
+          <>
+            <div className="h-10 w-10 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-3">
+              <span className="h-3.5 w-3.5 bg-rose-500 rounded-full animate-pulse" />
+            </div>
+            <p className="text-rose-400 font-semibold text-sm">AI Server Offline</p>
+            <p className="text-slate-400 text-xs mt-1 max-w-sm">
+              The server is currently offline. Analytics data cannot be retrieved.
+            </p>
+            <button
+              onClick={() => checkStatus(true)}
+              className="mt-4 px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition-all text-xs font-semibold cursor-pointer"
+            >
+              Try Reconnecting
+            </button>
+          </>
+        )}
+        {status === "online" && (loading || !data) && (
+          <>
+            <Activity className="h-10 w-10 text-cyan-400 mb-3 animate-spin" />
+            <p className="text-slate-300 font-semibold text-sm">Loading Historical Runs</p>
+            <p className="text-slate-500 text-xs mt-1">Fetching model validation and MLOps metrics...</p>
+          </>
+        )}
       </div>
     );
   }

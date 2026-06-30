@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AlertCircle, ShieldAlert, SlidersHorizontal, RefreshCw } from "lucide-react";
 import { API_BASE_URL } from "../config";
+import { useBackend } from "./BackendStatusProvider";
 
 interface ErrorLog {
   id: number;
@@ -17,6 +18,7 @@ interface ErrorLog {
 }
 
 export default function ErrorExplorer() {
+  const { status, elapsedSeconds, checkStatus } = useBackend();
   const [errors, setErrors] = useState<ErrorLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [modelFilter, setModelFilter] = useState<string>("all");
@@ -30,9 +32,10 @@ export default function ErrorExplorer() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    // Redirect to dashboard if token exists
-    fetchErrors();
-  }, []);
+    if (status === "online") {
+      fetchErrors();
+    }
+  }, [status]);
 
   const fetchErrors = async () => {
     setLoading(true);
@@ -178,9 +181,49 @@ export default function ErrorExplorer() {
       </div>
 
       {/* Main Grid View */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center p-12 text-center h-80">
-          <RefreshCw className="h-8 w-8 text-slate-600 animate-spin" />
+      {status === "offline" || status === "sleeping" || status === "checking" || loading ? (
+        <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-white/5 rounded-2xl glass h-80">
+          {status === "checking" && (
+            <>
+              <RefreshCw className="h-8 w-8 text-cyan-400 animate-spin mb-3" />
+              <p className="text-slate-300 font-semibold text-sm">Connecting to AI server...</p>
+              <p className="text-slate-500 text-xs mt-1">Retrieving logs...</p>
+            </>
+          )}
+          {status === "sleeping" && (
+            <>
+              <div className="h-8 w-8 rounded-full border-2 border-slate-700 border-t-amber-400 animate-spin mb-3" />
+              <p className="text-amber-400 font-semibold text-sm">AI Server is Waking Up</p>
+              <p className="text-slate-400 text-xs mt-1 max-w-sm">
+                To save energy, our server sleeps when inactive. It is starting up now—this takes about 50 seconds. Items will load automatically when ready.
+              </p>
+              <span className="mt-3 text-xs font-mono bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">
+                Waking up: {elapsedSeconds}s
+              </span>
+            </>
+          )}
+          {status === "offline" && (
+            <>
+              <div className="h-8 w-8 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-3">
+                <span className="h-2.5 w-2.5 bg-rose-500 rounded-full animate-pulse" />
+              </div>
+              <p className="text-rose-400 font-semibold text-sm">AI Server Offline</p>
+              <p className="text-slate-400 text-xs mt-1 max-w-sm">
+                The server is currently offline. Logged prediction details cannot be retrieved.
+              </p>
+              <button
+                onClick={() => checkStatus(true)}
+                className="mt-3.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition-all text-[10px] font-semibold cursor-pointer"
+              >
+                Try Reconnecting
+              </button>
+            </>
+          )}
+          {status === "online" && loading && (
+            <>
+              <RefreshCw className="h-8 w-8 text-cyan-400 animate-spin" />
+            </>
+          )}
         </div>
       ) : filteredErrors.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-white/5 rounded-2xl glass h-80">

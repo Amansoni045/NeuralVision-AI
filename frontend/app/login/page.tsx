@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Activity, LogIn, UserPlus, ArrowLeft } from "lucide-react";
 import { API_BASE_URL } from "@/config";
+import { useBackend } from "@/components/BackendStatusProvider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { status, elapsedSeconds, checkStatus } = useBackend();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -97,7 +99,48 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {errorMsg && (
+        {status !== "online" && (
+          <div className={`p-3.5 rounded-2xl text-xs mb-4 text-center border flex flex-col items-center justify-center ${
+            status === "sleeping" 
+              ? "bg-amber-500/10 text-amber-400 border-amber-500/20" 
+              : status === "checking" 
+              ? "bg-slate-500/10 text-slate-400 border-slate-500/20"
+              : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+          }`}>
+            {status === "checking" && (
+              <>
+                <div className="h-5 w-5 border border-slate-700 border-t-slate-400 animate-spin rounded-full mb-1.5" />
+                <span>Connecting to AI server...</span>
+              </>
+            )}
+            {status === "sleeping" && (
+              <>
+                <div className="h-5 w-5 border border-amber-850 border-t-amber-400 animate-spin rounded-full mb-1.5" />
+                <span className="font-semibold mb-0.5">AI Server is Waking Up ({elapsedSeconds}s)</span>
+                <span className="text-[10px] text-slate-400 leading-normal">
+                  To save energy, our server sleeps when inactive. Login will be available shortly.
+                </span>
+              </>
+            )}
+            {status === "offline" && (
+              <>
+                <span className="font-semibold mb-0.5">AI Server Offline</span>
+                <span className="text-[10px] text-slate-400 leading-normal mb-2.5">
+                  The login service is currently unreachable. Please try again later.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => checkStatus(true)}
+                  className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition-all text-[10px] font-semibold cursor-pointer"
+                >
+                  Try Reconnecting
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {errorMsg && status === "online" && (
           <div className={`p-3 rounded-lg text-xs mb-4 text-center border ${
             errorMsg.includes("successfully") 
               ? "bg-emerald-950/30 text-emerald-400 border-emerald-500/20" 
@@ -114,10 +157,11 @@ export default function LoginPage() {
               <input
                 type="text"
                 required
+                disabled={status !== "online" || loading}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
-                className="w-full bg-slate-950/80 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-cyan-500/30 transition-colors"
+                className="w-full bg-slate-950/80 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-cyan-500/30 transition-colors disabled:opacity-50"
               />
             </div>
           )}
@@ -127,10 +171,11 @@ export default function LoginPage() {
             <input
               type="email"
               required
+              disabled={status !== "online" || loading}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@domain.com"
-              className="w-full bg-slate-950/80 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-cyan-500/30 transition-colors"
+              className="w-full bg-slate-950/80 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-cyan-500/30 transition-colors disabled:opacity-50"
             />
           </div>
 
@@ -139,16 +184,17 @@ export default function LoginPage() {
             <input
               type="password"
               required
+              disabled={status !== "online" || loading}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-slate-950/80 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-cyan-500/30 transition-colors"
+              className="w-full bg-slate-950/80 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-cyan-500/30 transition-colors disabled:opacity-50"
             />
           </div>
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={status !== "online" || loading}
             className="w-full py-3 btn-cyber rounded-xl text-xs font-semibold tracking-wide flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
           >
             {isLogin ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
@@ -163,7 +209,8 @@ export default function LoginPage() {
               setIsLogin(!isLogin);
               setErrorMsg("");
             }}
-            className="text-xs text-slate-400 hover:text-cyan-400 transition-colors font-medium cursor-pointer"
+            disabled={status !== "online"}
+            className="text-xs text-slate-400 hover:text-cyan-400 transition-colors font-medium cursor-pointer disabled:opacity-50"
           >
             {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"}
           </button>

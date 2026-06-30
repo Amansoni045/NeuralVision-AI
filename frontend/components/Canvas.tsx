@@ -5,6 +5,7 @@ import { Trash2, BrainCircuit } from "lucide-react";
 import { API_BASE_URL } from "../config";
 import type { XAIPredictionData } from "./XAIModule";
 import { animateDrawing } from "../utils/demoSession";
+import { useBackend } from "./BackendStatusProvider";
 
 interface CanvasProps {
   onPredict: (data: XAIPredictionData) => void;
@@ -26,6 +27,7 @@ export interface CanvasRef {
 
 const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { status, elapsedSeconds, checkStatus } = useBackend();
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
   const [prediction, setPrediction] = useState<number | null>(null);
@@ -290,6 +292,45 @@ const Canvas = forwardRef<CanvasRef, CanvasProps>(({ onPredict, selectedModel },
       {/* Canvas Block */}
       <div className="flex flex-col items-center">
         <div className={`relative p-2.5 rounded-2xl glass border transition-all duration-300 ${loading ? 'border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'border-white/10 glow-pulse'}`}>
+          {(status === "offline" || status === "sleeping" || status === "checking") && (
+            <div className="absolute inset-0 bg-slate-950/90 rounded-2xl flex flex-col items-center justify-center p-6 text-center z-20 backdrop-blur-sm">
+              {status === "checking" && (
+                <>
+                  <div className="h-8 w-8 rounded-full border-2 border-slate-700 border-t-cyan-400 animate-spin mb-3" />
+                  <p className="text-xs font-semibold text-slate-300">Connecting to AI server...</p>
+                </>
+              )}
+              {status === "sleeping" && (
+                <>
+                  <div className="h-8 w-8 rounded-full border-2 border-slate-700 border-t-amber-400 animate-spin mb-3" />
+                  <p className="text-xs font-semibold text-amber-400 mb-1">AI Server is Waking Up</p>
+                  <p className="text-[10px] text-slate-400 leading-normal max-w-[220px]">
+                    To save energy, our server sleeps when inactive. It is starting up now—this takes about 50 seconds.
+                  </p>
+                  <span className="mt-3 text-xs font-mono bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">
+                    Waking up: {elapsedSeconds}s
+                  </span>
+                </>
+              )}
+              {status === "offline" && (
+                <>
+                  <div className="h-8 w-8 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-3">
+                    <span className="h-3 w-3 bg-rose-500 rounded-full animate-pulse" />
+                  </div>
+                  <p className="text-xs font-semibold text-rose-400 mb-1">AI Server Offline</p>
+                  <p className="text-[10px] text-slate-400 leading-normal max-w-[220px]">
+                    The server is currently offline. Please try starting the server if running locally.
+                  </p>
+                  <button
+                    onClick={() => checkStatus(true)}
+                    className="mt-3.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition-all text-[10px] font-semibold cursor-pointer"
+                  >
+                    Try Reconnecting
+                  </button>
+                </>
+              )}
+            </div>
+          )}
           {!hasDrawn && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
               <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-white/5 shadow-xl animate-pulse">

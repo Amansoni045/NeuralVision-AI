@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Camera, Image as ImageIcon, Video, StopCircle, RefreshCw } from "lucide-react";
 import { API_BASE_URL } from "../config";
 import type { XAIPredictionData } from "./XAIModule";
+import { useBackend } from "./BackendStatusProvider";
 
 
 interface WebcamPredictProps {
@@ -19,6 +20,7 @@ interface InferenceResponse extends XAIPredictionData {
 }
 
 export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredictProps) {
+  const { status, elapsedSeconds, checkStatus } = useBackend();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -113,6 +115,13 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
       stopCamera();
     };
   }, []);
+
+  // Stop webcam polling if backend goes offline
+  useEffect(() => {
+    if (status !== "online" && cameraActive) {
+      stopCamera();
+    }
+  }, [status, cameraActive]);
 
   // Frame processing and prediction
   const captureFrameAndPredict = async () => {
@@ -260,7 +269,46 @@ export default function WebcamPredict({ onPredict, selectedModel }: WebcamPredic
   return (
     <div className="flex flex-col md:flex-row gap-8 items-center justify-center w-full">
       {/* Selector Tabs */}
-      <div className="flex flex-col items-center w-full max-w-md">
+      <div className="flex flex-col items-center w-full max-w-md relative">
+        {(status === "offline" || status === "sleeping" || status === "checking") && (
+          <div className="absolute inset-0 bg-slate-950/95 rounded-2xl flex flex-col items-center justify-center p-6 text-center z-20 backdrop-blur-sm border border-white/5 shadow-2xl">
+            {status === "checking" && (
+              <>
+                <div className="h-8 w-8 rounded-full border-2 border-slate-700 border-t-cyan-400 animate-spin mb-3" />
+                <p className="text-xs font-semibold text-slate-300">Connecting to AI server...</p>
+              </>
+            )}
+            {status === "sleeping" && (
+              <>
+                <div className="h-8 w-8 rounded-full border-2 border-slate-700 border-t-amber-400 animate-spin mb-3" />
+                <p className="text-xs font-semibold text-amber-400 mb-1">AI Server is Waking Up</p>
+                <p className="text-[10px] text-slate-400 leading-normal max-w-[250px]">
+                  To save energy, our server sleeps when inactive. It is starting up now—this takes about 50 seconds. Webcam and uploads will resume automatically.
+                </p>
+                <span className="mt-3 text-xs font-mono bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">
+                  Waking up: {elapsedSeconds}s
+                </span>
+              </>
+            )}
+            {status === "offline" && (
+              <>
+                <div className="h-8 w-8 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-3">
+                  <span className="h-3 w-3 bg-rose-500 rounded-full animate-pulse" />
+                </div>
+                <p className="text-xs font-semibold text-rose-400 mb-1">AI Server Offline</p>
+                <p className="text-[10px] text-slate-400 leading-normal max-w-[250px]">
+                  The server is currently offline. Please try starting the server if running locally.
+                </p>
+                <button
+                  onClick={() => checkStatus(true)}
+                  className="mt-3.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition-all text-[10px] font-semibold cursor-pointer"
+                >
+                  Try Reconnecting
+                </button>
+              </>
+            )}
+          </div>
+        )}
         <div className="flex space-x-2 p-1 bg-slate-950/80 border border-white/5 rounded-xl w-full mb-6">
           <button
             onClick={() => {
