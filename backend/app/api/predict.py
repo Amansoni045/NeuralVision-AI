@@ -1,12 +1,12 @@
 import base64
-from fastapi import APIRouter, Depends, UploadFile, File, Form
+from fastapi import APIRouter, Depends, UploadFile, File, Form, BackgroundTasks
 from typing import Optional
 from sqlalchemy.orm import Session
 import numpy as np
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
-from backend.app.core.database import get_db
+from backend.app.core.database import get_db, SessionLocal
 from backend.app.core.security import ALGORITHM
 from backend.app.core.config import settings
 from backend.app.db.models import User, PredictionHistory, BattleArenaLog
@@ -31,6 +31,41 @@ def get_optional_user(db: Session = Depends(get_db), token: Optional[str] = Depe
         return user
     except JWTError:
         return None
+
+def log_battle_in_background(
+    user_id: Optional[int],
+    image_data: str,
+    perceptron_predicted: int,
+    perceptron_confidence: float,
+    perceptron_latency_ms: float,
+    ann_predicted: int,
+    ann_confidence: float,
+    ann_latency_ms: float,
+    cnn_predicted: int,
+    cnn_confidence: float,
+    cnn_latency_ms: float
+):
+    db = SessionLocal()
+    try:
+        db_log = BattleArenaLog(
+            user_id=user_id,
+            image_data=image_data,
+            perceptron_predicted=perceptron_predicted,
+            perceptron_confidence=perceptron_confidence,
+            perceptron_latency_ms=perceptron_latency_ms,
+            ann_predicted=ann_predicted,
+            ann_confidence=ann_confidence,
+            ann_latency_ms=ann_latency_ms,
+            cnn_predicted=cnn_predicted,
+            cnn_confidence=cnn_confidence,
+            cnn_latency_ms=cnn_latency_ms
+        )
+        db.add(db_log)
+        db.commit()
+    except Exception as e:
+        print(f"Background battle log failed: {e}")
+    finally:
+        db.close()
 
 @router.post("", response_model=PredictResponse)
 def predict_digit(
@@ -58,24 +93,27 @@ def predict_digit(
         gradcam_img = generate_gradcam_base64(prediction_service.cnn, preprocessed_img)
         activation_maps = get_activation_maps(prediction_service.cnn, preprocessed_img)
         
-    # Save to history in DB
+    # Save to history in DB (only for final predictions: uploads or canvas with explain=True)
     db_history = None
-    try:
-        db_history = PredictionHistory(
-            user_id=current_user.id if current_user else None,
-            image_data=payload.image_data,
-            model_type=payload.model_type,
-            predicted_label=res["predicted_class"],
-            confidence=res["confidence"],
-            all_confidences=res["all_confidences"],
-            inference_time_ms=res["latency_ms"],
-            source=payload.source
-        )
-        db.add(db_history)
-        db.commit()
-        db.refresh(db_history)
-    except Exception as e:
-        print(f"Database save error (prediction logging bypassed): {e}")
+    should_log = (payload.source == "upload") or (payload.source == "canvas" and payload.explain) or (payload.source == "webcam" and payload.explain)
+    
+    if should_log:
+        try:
+            db_history = PredictionHistory(
+                user_id=current_user.id if current_user else None,
+                image_data=payload.image_data,
+                model_type=payload.model_type,
+                predicted_label=res["predicted_class"],
+                confidence=res["confidence"],
+                all_confidences=res["all_confidences"],
+                inference_time_ms=res["latency_ms"],
+                source=payload.source
+            )
+            db.add(db_history)
+            db.commit()
+            db.refresh(db_history)
+        except Exception as e:
+            print(f"Database save error (prediction logging bypassed): {e}")
         
     prediction_id = db_history.id if db_history else None
 
@@ -122,6 +160,7 @@ def predict_image(
 @router.post("/battle", response_model=BattleArenaResponse)
 def predict_battle(
     payload: PredictRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_user)
 ):
@@ -140,29 +179,21 @@ def predict_battle(
         gradcam_img = generate_gradcam_base64(prediction_service.cnn, preprocessed_img)
         activation_maps = get_activation_maps(prediction_service.cnn, preprocessed_img)
         
-    # Log to BattleArenaLogs table
-    db_log = None
-    try:
-        db_log = BattleArenaLog(
-            user_id=current_user.id if current_user else None,
-            image_data=payload.image_data,
-            perceptron_predicted=percep_res["predicted_class"],
-            perceptron_confidence=percep_res["confidence"],
-            perceptron_latency_ms=percep_res["latency_ms"],
-            ann_predicted=ann_res["predicted_class"],
-            ann_confidence=ann_res["confidence"],
-            ann_latency_ms=ann_res["latency_ms"],
-            cnn_predicted=cnn_res["predicted_class"],
-            cnn_confidence=cnn_res["confidence"],
-            cnn_latency_ms=cnn_res["latency_ms"]
-        )
-        db.add(db_log)
-        db.commit()
-        db.refresh(db_log)
-    except Exception as e:
-        print(f"Database save error (battle logging bypassed): {e}")
-
-    log_id = db_log.id if db_log else None
+    # Log to BattleArenaLogs table in background
+    background_tasks.add_task(
+        log_battle_in_background,
+        current_user.id if current_user else None,
+        payload.image_data,
+        percep_res["predicted_class"],
+        percep_res["confidence"],
+        percep_res["latency_ms"],
+        ann_res["predicted_class"],
+        ann_res["confidence"],
+        ann_res["latency_ms"],
+        cnn_res["predicted_class"],
+        cnn_res["confidence"],
+        cnn_res["latency_ms"]
+    )
 
     return {
         "perceptron": percep_res,
@@ -170,5 +201,5 @@ def predict_battle(
         "cnn": cnn_res,
         "gradcam_image": gradcam_img,
         "activation_maps": activation_maps,
-        "log_id": log_id
+        "log_id": 0
     }
